@@ -2,10 +2,11 @@ import express from 'express';
 import path from 'path';
 import { json } from 'body-parser';
 
-import routes from './src/routes';
-
 import dotenv from 'dotenv';
 dotenv.config();
+
+import routes from './src/routes';
+
 
 const app = express();
 app.use(json());
