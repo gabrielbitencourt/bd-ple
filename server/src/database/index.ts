@@ -1,7 +1,7 @@
-import mysql, { Connection, FieldInfo } from 'mysql';
+import mysql, { Connection } from 'mysql';
 
 interface ExtendedConnection extends Connection {
-    asyncQuery(query: string, ...params: (string | number | boolean)[]): Promise<{ results: any[], fields?: FieldInfo[] }>
+    asyncQuery(query: string, ...params: (string | number | boolean)[]): Promise<any[]>
 }
 
 const connection: ExtendedConnection = mysql.createConnection({
@@ -14,26 +14,8 @@ const connection: ExtendedConnection = mysql.createConnection({
 connection.connect();
 connection.asyncQuery = (query: string, ...params: (string | number | boolean | undefined)[]) => {
     return new Promise((resolve, reject) => {
-        const nParams = query.split('?').length - 1;
-        if (nParams != params.length) {
-            return reject("Número de parâmetros da query é diferente do que o esperado.");
-        }
         try {
-            let consolidatedQuery = query;
-            for (const param of params) {
-                let value;
-                if (param == undefined) {
-                    value = 'null'
-                }
-                else {
-                    value = param.toString();
-                    if (typeof param == "string") {
-                        value = '"' + value + '"';
-                    }
-                }
-                consolidatedQuery = consolidatedQuery.replace('?', value);
-            }
-            return connection.query(consolidatedQuery, (error, result, fields) => error ? reject(error) : resolve({ results: result, fields }));
+            return connection.query(query, params, (error, result, _) => error ? reject(error) : resolve(result));
         } catch (error) {
             return reject(error);
         }
