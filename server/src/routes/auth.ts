@@ -2,6 +2,7 @@ import { Router } from 'express';
 import connection from '../database';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
+import passport from 'passport';
 import { validator } from 'indicative';
 const validations = validator.validations;
 
@@ -49,7 +50,7 @@ router.post('/login', async (req, res) => {
                 signed: true,
                 httpOnly: true,
                 secure: process.env.development === "true",
-                sameSite: true
+                sameSite: process.env.development === "true"
             });
             res.status(200);
             return res.json({
@@ -124,5 +125,12 @@ router.post('/register', async (req, res) => {
             data: error
         });
     }
+});
+router.get('/refresh', passport.authenticate('jwt-cookie', { session: false }), (req, res) => {
+    // console.log(req.user);
+    res.status(200);
+    return res.json({
+        error: false
+    });
 });
 export default router;

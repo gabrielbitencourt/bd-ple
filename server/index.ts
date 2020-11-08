@@ -3,6 +3,7 @@ import path from 'path';
 import { json } from 'body-parser';
 import cookie from 'cookie-parser';
 import cors from 'cors';
+import logger from 'morgan';
 
 // import configurations from .env to process.env variable
 import dotenv from 'dotenv';
@@ -18,6 +19,11 @@ import routes from './src/routes';
 
 const app = express();
 
+// logger middleware for development environment
+if (process.env.DEVELOPMENT == "true") {
+    app.use(logger('dev'));
+}
+
 // parse json body and cookies 
 app.use(json());
 app.use(cookie(process.env.COOKIE_SECRET || 'n0ts4f3sEcRE7'));
@@ -25,7 +31,7 @@ app.use(cookie(process.env.COOKIE_SECRET || 'n0ts4f3sEcRE7'));
 // allow cross origin requests (TODO: not necessary for production)
 app.use(cors({
     credentials: true,
-    origin: 'localhost:3000,localhost:4200'
+    origin: 'http://localhost:4200'
 }));
 
 // initialize passport middleware

@@ -1,0 +1,10 @@
+#login-container {
+    height: calc(100% - 60px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: row;
+    mat-form-field, button {
+        width: 100%;
+    }
+}

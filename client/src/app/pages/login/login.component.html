@@ -1,0 +1,28 @@
+<div id="login-container">
+    <form [formGroup]="loginForm" (ngSubmit)="onLogin()">
+        <div>
+            <mat-form-field appearance="fill">
+                <mat-label>Login</mat-label>
+                <input matInput [formControl]="login" required>
+                <mat-error *ngIf="login.invalid">
+                    {{ login.hasError('required') ? 'O campo de login é obrigatório' : '' }}
+                </mat-error>
+            </mat-form-field>
+        </div>
+        <div>
+            <mat-form-field appearance="fill">
+                <mat-label>Senha</mat-label>
+                <input matInput [formControl]="password" [type]="hide ? 'password' : 'text'" required>
+                <button mat-icon-button matSuffix type="button" (click)="hide = !hide">
+                    <mat-icon>{{ hide ? 'visibility_off' : 'visibility' }}</mat-icon>
+                </button>
+                <mat-error *ngIf="password.invalid">
+                    {{ password.hasError('required') ? 'O campo de login é obrigatório' : '' }}
+                </mat-error>
+            </mat-form-field>
+        </div>
+        <button mat-raised-button color="primary" type="submit">
+            Login
+        </button>
+    </form>
+</div>
