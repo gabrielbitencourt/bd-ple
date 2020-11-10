@@ -127,10 +127,10 @@ router.post('/register', async (req, res) => {
     }
 });
 router.get('/refresh', passport.authenticate('jwt-cookie', { session: false }), (req, res) => {
-    // console.log(req.user);
     res.status(200);
     return res.json({
-        error: false
+        error: false,
+        data: req.user
     });
 });
 export default router;

@@ -1,2 +1,36 @@
-<p>home works!</p>
-<button (click)="refresh()">Click me pls</button>
+<mat-accordion>
+    <mat-expansion-panel *ngFor="let questionnaire of questionnaires" hideToggle>
+        <mat-expansion-panel-header>
+            <mat-panel-title>
+                {{ questionnaire.description }}
+            </mat-panel-title>
+            <mat-panel-description></mat-panel-description>
+        </mat-expansion-panel-header>
+        <p>...</p>
+    </mat-expansion-panel>
+    <mat-expansion-panel #formPanel hideToggle>
+        <mat-expansion-panel-header>
+            <mat-panel-title>
+                Adicionar novo questionário
+            </mat-panel-title>
+            <mat-panel-description></mat-panel-description>
+        </mat-expansion-panel-header>
+        <div>
+            <form [formGroup]="createForm" (ngSubmit)="createQuestionnaire(formPanel)">
+                <div>
+                    <mat-form-field appearance="fill">
+                        <mat-label>Descrição</mat-label>
+                        <input matInput [formControl]="description" required>
+                        <mat-error *ngIf="description.invalid">
+                            {{ description.hasError('required') ? 'O campo de descrição é obrigatório' : '' }}
+                            {{ description.hasError('maxlength') ? 'O tamanho máximo do campo de descrição é 255 caracteres' : '' }}
+                        </mat-error>
+                    </mat-form-field>
+                </div>
+                <button mat-raised-button color="primary" type="submit">
+                    Criar
+                </button>
+            </form>
+        </div>
+    </mat-expansion-panel>
+</mat-accordion>
