@@ -1,5 +1,5 @@
 import { ParsedRule } from 'indicative-parser';
-import connection from '../database';
+import connection from '.';
 
 type ValidationsMap = { [key: string]: { [key: string]: ParsedRule[]; }; };
 

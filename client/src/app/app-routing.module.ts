@@ -16,7 +16,13 @@ const routes: Routes = [
   },
   {
     path: 'register',
+    canActivate: [AlreadyLoggedInGuard],
     loadChildren: () => import('./pages/register/register.module').then(m => m.RegisterModule)
+  },
+  {
+    path: 'questionnaire',
+    canActivate: [AuthGuard],
+    loadChildren: () => import('./pages/questionnaire/questionnaire.module').then(m => m.QuestionnaireModule)
   }
 ];
 

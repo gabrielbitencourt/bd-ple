@@ -34,6 +34,12 @@ export class HomeComponent implements OnInit {
     this.questionnaires = await this.questionnaireService.getAll().pipe(first()).toPromise();
   }
 
+  async groupsFromQuestionnaire(questionnaire: IQuestionnaire) {
+    if (!questionnaire.groups) {
+      questionnaire.groups = await this.questionnaireService.getAnswersGroups(questionnaire.questionnaireID).pipe(first()).toPromise();
+    }
+  }
+
   async createQuestionnaire(panel: MatExpansionPanel) {
     const data: IQuestionnaire = { ...this.createForm.value };
     const created = await this.questionnaireService.create(data).pipe(first()).toPromise();

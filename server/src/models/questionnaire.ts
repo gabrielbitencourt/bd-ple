@@ -1,8 +1,8 @@
-import { ObjectModel, Field } from '../database/orm';
+import { ObjectModel, Field } from '../database/object-model';
 import { validator } from 'indicative';
 const validations = validator.validations;
 
-export interface IQuestionnaire {
+interface IQuestionnaire {
 	questionnaireID: number;
 	description: string;
 };

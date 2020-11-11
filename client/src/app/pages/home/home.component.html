@@ -1,14 +1,24 @@
 <mat-accordion>
-    <mat-expansion-panel *ngFor="let questionnaire of questionnaires" hideToggle>
+    <mat-expansion-panel *ngFor="let questionnaire of questionnaires" (opened)="groupsFromQuestionnaire(questionnaire)">
         <mat-expansion-panel-header>
             <mat-panel-title>
                 {{ questionnaire.description }}
             </mat-panel-title>
             <mat-panel-description></mat-panel-description>
         </mat-expansion-panel-header>
-        <p>...</p>
+        <div *ngIf="questionnaire.groups">
+            <p *ngIf="!questionnaire.groups.length">Não há respostas desse questionário.</p>
+            <mat-list *ngIf="questionnaire.groups.length">
+                <a mat-list-item *ngFor="let group of questionnaire.groups; last as last" [routerLink]="['questionnaire', questionnaire.questionnaireID, 'answers', group.hospitalUnitID, group.participantID]">
+                    <mat-icon matListIcon>account_box</mat-icon>
+                    {{ group.numeroPaciente }} - {{ group.hospital }}
+                    <mat-divider [inset]="true" *ngIf="!last"></mat-divider>
+                </a>
+            </mat-list>
+        </div>
+        <p *ngIf="!questionnaire.groups">Carregando...</p>
     </mat-expansion-panel>
-    <mat-expansion-panel #formPanel hideToggle>
+    <mat-expansion-panel #formPanel>
         <mat-expansion-panel-header>
             <mat-panel-title>
                 Adicionar novo questionário
