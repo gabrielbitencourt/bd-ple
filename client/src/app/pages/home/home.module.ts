@@ -11,6 +11,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
+import { QuestionModule } from 'src/app/components/question/question.module';
 
 @NgModule({
   declarations: [HomeComponent],

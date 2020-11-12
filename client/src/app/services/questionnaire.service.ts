@@ -4,7 +4,6 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 import { IQuestionnaire } from '../models/questionnaire';
-import { IQuestionnaireAnswers, IQuestionnaireAnswersGroup } from '../models/questionnaire-answers';
 import { IResponse } from '../models/response';
 
 @Injectable({
@@ -21,26 +20,6 @@ export class QuestionnaireService {
         return [];
       })
     );
-  }
-
-  getAnswersGroups(questionnaireId: number): Observable<IQuestionnaireAnswersGroup[]> {
-    return this.http.get<IResponse>(environment.apiUrl + `/form-records/${questionnaireId}/groups`, { withCredentials: true })
-      .pipe(
-        map(res => {
-          if (!res.error) return res.data;
-          return [];
-        })
-      );
-  }
-
-  getAnswers(questionnaireId: string, hospitalId: string, participantId: string): Observable<IQuestionnaireAnswers[]> {
-    return this.http.get<IResponse>(environment.apiUrl + `/form-records/${questionnaireId}/${participantId}/${hospitalId}`, { withCredentials: true })
-      .pipe(
-        map(res => {
-          if (!res.error) return res.data;
-          return [];
-        })
-      );
   }
 
   create(data: IQuestionnaire): Observable<boolean> {

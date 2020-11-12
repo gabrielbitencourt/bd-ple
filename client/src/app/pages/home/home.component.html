@@ -11,7 +11,14 @@
             <mat-list *ngIf="questionnaire.groups.length">
                 <a mat-list-item *ngFor="let group of questionnaire.groups; last as last" [routerLink]="['questionnaire', questionnaire.questionnaireID, 'answers', group.hospitalUnitID, group.participantID]">
                     <mat-icon matListIcon>account_box</mat-icon>
-                    {{ group.numeroPaciente }} - {{ group.hospital }}
+                    {{ group.medicalRecord }} - {{ group.hospitalUnitName }}
+                    <mat-divider [inset]="true" *ngIf="!last"></mat-divider>
+                </a>
+            </mat-list>
+            <mat-list>
+                <a mat-list-item [routerLink]="['questionnaire', questionnaire.questionnaireID, 'answer']">
+                    <mat-icon matListIcon>add</mat-icon>
+                    Criar nova resposta
                     <mat-divider [inset]="true" *ngIf="!last"></mat-divider>
                 </a>
             </mat-list>

@@ -1,5 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 import { IResponse } from '../models/response';
@@ -10,27 +11,22 @@ import { IUser } from '../models/user';
 })
 export class AuthService {
 
-  loggedIn = false;
-  _user?: IUser;
-  public get user(): IUser {
-    return this._user;
+  loggedIn: BehaviorSubject<boolean> = new BehaviorSubject(false);
+  user: BehaviorSubject<IUser> = new BehaviorSubject(null);
+
+
+  constructor(private http: HttpClient) {
+    this.loggedIn.next(false);
   }
-
-  public set user(v: IUser) {
-    this._user = v;
-  }
-
-
-  constructor(private http: HttpClient) { }
 
   refreshToken() {
     return this.http.get<IResponse>(environment.apiUrl + '/auth/refresh', { withCredentials: true })
       .pipe(
         tap(res => {
           if (!res.error) {
-            this.user = res.data;
+            this.user.next(res.data);
           }
-          this.loggedIn = !res.error;
+          this.loggedIn.next(!res.error);
         })
       );
   }
@@ -40,9 +36,9 @@ export class AuthService {
       .pipe(
         tap(res => {
           if (!res.error) {
-            this.user = res.data;
+            this.user.next(res.data);
           }
-          this.loggedIn = !res.error;
+          this.loggedIn.next(!res.error);
         })
       );
   }

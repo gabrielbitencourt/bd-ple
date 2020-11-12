@@ -1,0 +1,20 @@
+<mat-accordion>
+    <mat-expansion-panel *ngFor="let pair of modules | keyvalue">
+        <mat-expansion-panel-header>
+            <mat-panel-title>
+                {{ pair.value.module.name }}
+            </mat-panel-title>
+            <mat-panel-description>
+                {{ pair.value.module.dtRegistroForm | date: 'dd/MM/yyyy hh:mm:ss' }}
+            </mat-panel-description>
+        </mat-expansion-panel-header>
+        <div *ngIf="pair.value.groups">
+            <div *ngFor="let groupPair of pair.value.groups | keyvalue; first as first">
+                <hr *ngIf="!first">
+                <h1>{{ groupPair.value.group.name }}</h1>
+                <app-question *ngFor="let question of groupPair.value.answers" [question]="question"></app-question>
+            </div>
+        </div>
+        <p *ngIf="!pair.value">Carregando...</p>
+    </mat-expansion-panel>
+</mat-accordion>

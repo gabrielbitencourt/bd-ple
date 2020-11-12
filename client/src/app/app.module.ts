@@ -8,6 +8,7 @@ import { NavbarComponent } from './components/navbar/navbar.component';
 import { FooterComponent } from './components/footer/footer.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { HttpInterceptorService } from './services/http-interceptor.service';
+import { QuestionComponent } from './components/question/question.component';
 
 @NgModule({
   declarations: [

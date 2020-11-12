@@ -11,7 +11,7 @@ export class AlreadyLoggedInGuard implements CanActivate {
   constructor(public router: Router, private authService: AuthService) { }
 
   canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean | UrlTree {
-    if (!this.authService.loggedIn) return true;
+    if (!this.authService.loggedIn.getValue()) return true;
     return this.router.createUrlTree(['/']);
   }
 }

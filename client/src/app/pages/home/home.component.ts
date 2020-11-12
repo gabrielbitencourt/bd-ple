@@ -3,6 +3,7 @@ import { FormControl, Validators, FormGroup } from '@angular/forms';
 import { MatExpansionPanel } from '@angular/material/expansion';
 import { first } from 'rxjs/operators';
 import { IQuestionnaire } from 'src/app/models/questionnaire';
+import { FormRecordService } from 'src/app/services/form-record.service';
 import { QuestionnaireService } from 'src/app/services/questionnaire.service';
 
 @Component({
@@ -13,7 +14,6 @@ import { QuestionnaireService } from 'src/app/services/questionnaire.service';
 export class HomeComponent implements OnInit {
 
   questionnaires: IQuestionnaire[] = [];
-  add = false;
 
   description = new FormControl('', [
     Validators.required,
@@ -24,7 +24,7 @@ export class HomeComponent implements OnInit {
     description: this.description,
   });
 
-  constructor(private questionnaireService: QuestionnaireService) { }
+  constructor(private questionnaireService: QuestionnaireService, private formRecordService: FormRecordService) { }
 
   ngOnInit(): void {
     this.loadQuestionnaires();
@@ -36,7 +36,7 @@ export class HomeComponent implements OnInit {
 
   async groupsFromQuestionnaire(questionnaire: IQuestionnaire) {
     if (!questionnaire.groups) {
-      questionnaire.groups = await this.questionnaireService.getAnswersGroups(questionnaire.questionnaireID).pipe(first()).toPromise();
+      questionnaire.groups = await this.formRecordService.getAnswersGroups(questionnaire.questionnaireID).pipe(first()).toPromise();
     }
   }
 

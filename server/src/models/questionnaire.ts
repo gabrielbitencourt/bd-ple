@@ -1,4 +1,4 @@
-import { ObjectModel, Field } from '../database/object-model';
+import { ObjectModel } from '../database/object-model';
 import { validator } from 'indicative';
 const validations = validator.validations;
 
@@ -11,7 +11,7 @@ class Questionnaire extends ObjectModel<IQuestionnaire> {
 	constructor() {
 		super({
 			table: 'tb_Questionnaire',
-			fields: [Field.primary('questionnaireID', true), Field.raw('description')],
+			fields: ['questionnaireID', 'description'],
 			validations: {
 				insertValidation: {
 					description: [

@@ -1,0 +1,47 @@
+<form [formGroup]="createForm" (ngSubmit)="createFormRecord()">
+    <div>
+        <mat-form-field appearance="fill">
+            <mat-label>Hospital</mat-label>
+            <select matNativeControl [formControl]="hospital" required>
+                <option disabled>Escolha a unidade hospitalar</option>
+                <option *ngFor="let hospital of hospitals" [ngValue]="hospital.hospitalUnitID">
+                    {{ hospital.hospitalUnitName }}
+                </option>
+            </select>
+            <mat-error *ngIf="hospital.invalid">
+                {{ hospital.hasError('required') ? 'O campo de hospital é obrigatório' : '' }}
+            </mat-error>
+        </mat-form-field>
+    </div>
+    <div>
+        <mat-form-field appearance="fill">
+            <mat-label>Participante</mat-label>
+            <select matNativeControl [formControl]="participant" required>
+                <option disabled>Escolha o participante</option>
+                <option *ngFor="let participant of participants" [ngValue]="participant.participantID">
+                    {{ participant.medicalRecord }}
+                </option>
+            </select>
+            <mat-error *ngIf="participant.invalid">
+                {{ participant.hasError('required') ? 'O campo de hospital é obrigatório' : '' }}
+            </mat-error>
+        </mat-form-field>
+    </div>
+    <div>
+        <mat-form-field appearance="fill">
+            <mat-label>Módulo</mat-label>
+            <select matNativeControl [formControl]="participant" required>
+                <option disabled>Escolha o módulo</option>
+                <option *ngFor="let module of modules" [ngValue]="module.crfFormsID">
+                    {{ module.description }}
+                </option>
+            </select>
+            <mat-error *ngIf="participant.invalid">
+                {{ participant.hasError('required') ? 'O campo de módulo é obrigatório' : '' }}
+            </mat-error>
+        </mat-form-field>
+    </div>
+    <button mat-raised-button color="primary" type="submit">
+        Criar
+    </button>
+</form>

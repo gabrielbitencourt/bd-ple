@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import { formRecord } from '../models/form-record';
 import { validator } from 'indicative';
 import connection from '../database';
 
@@ -8,9 +7,9 @@ router.get('/:questionnaireID/groups', async (req, res) => {
     const query = `
         SELECT
             p.participantID,
-            p.medicalRecord numeroPaciente,
+            p.medicalRecord,
             h.hospitalUnitID,
-            h.hospitalUnitName hospital
+            h.hospitalUnitName
         FROM tb_FormRecord fr
         LEFT JOIN tb_HospitalUnit h ON fr.hospitalUnitID = h.hospitalUnitID
         LEFT JOIN tb_Participant p ON fr.participantID = p.participantID
@@ -22,8 +21,8 @@ router.get('/:questionnaireID/groups', async (req, res) => {
         LEFT JOIN tb_QuestionType qt ON q.questionTypeID = qt.questionTypeID
         LEFT JOIN tb_QuestionGroup qg ON q.questionGroupID = qg.questionGroupID
         WHERE fr.questionnaireID = ?
-        GROUP BY participantID, numeroPaciente, hospital, hospitalUnitID;`;
-    
+        GROUP BY participantID, medicalRecord, hospitalUnitName, hospitalUnitID;`;
+
     try {
         const result = await connection.asyncQuery(query, req.params.questionnaireID);
         res.status(200);
@@ -33,34 +32,37 @@ router.get('/:questionnaireID/groups', async (req, res) => {
         });
     } catch (error) {
         res.status(500);
+        console.log(error);
         return res.json({
             error: false,
-            message: error
+            data: error
         });
     }
 });
-router.get('/:questionnaireID/:participantID/:hospitalID', async (req, res) => {
+router.get('/:questionnaireID/participant/:participantID/hospital/:hospitalUnitID', async (req, res) => {
     const query = `
         SELECT
             fr.formRecordID,
-            fr.dtRegistroForm dataAplicacao,
+            fr.dtRegistroForm,
+            crf.description crfDescription,
 
-            qgfr.answer respostaLivre,
+            qgfr.answer,
 
-            lv.description respostaLista,
-            lt.description nomeLista,
+            lv.description listValueDescription,
+            lt.description listTypeDescription,
 
             q.questionID,
-            q.description pergunta,
+            q.description questionDescription,
 
             qt.questionTypeID,
-            qt.description tipoPergunta,
+            qt.description questionTypeDescription,
 
             qg.questionGroupID,
-            qg.description grupo,
+            qg.description questionGroupDescription,
 
-            qs.questionID questaoPai
+            qs.questionID questaoPaiID
         FROM tb_FormRecord fr
+        LEFT JOIN tb_CRFForms crf ON fr.crfFormsID = crf.crfFormsID
         LEFT JOIN tb_HospitalUnit h ON fr.hospitalUnitID = h.hospitalUnitID
         LEFT JOIN tb_Participant p ON fr.participantID = p.participantID
         LEFT JOIN tb_questiongroupformrecord qgfr ON qgfr.formRecordID = fr.formRecordID
@@ -78,7 +80,7 @@ router.get('/:questionnaireID/:participantID/:hospitalID', async (req, res) => {
             p.participantID = ?;`;
 
     try {
-        const result = await connection.asyncQuery(query, req.params.questionnaireID, req.params.hospitalID, req.params.participantID);
+        const result = await connection.asyncQuery(query, req.params.questionnaireID, req.params.hospitalUnitID, req.params.participantID);
         res.status(200);
         return res.json({
             error: false,
@@ -94,30 +96,50 @@ router.get('/:questionnaireID/:participantID/:hospitalID', async (req, res) => {
 
 });
 
-router.post('/', async (req, res) => {
-    const body = req.body;
-    try {
-        await validator.validateAll(body, formRecord.validations.insertValidation);
-    } catch (error) {
-        res.status(422);
-        res.json({
-            error: true,
-            data: error
+router.post('/:questionnaireID/crf/:crfFormsID/participant/:participantID/hospital/:hospitalUnitID', async (req, res) => {
+    const params = req.params;
+    const err = await connection.asyncBeginTransaction();
+    if (err) {
+        await connection.asyncRollback();
+        res.status(500);
+        console.error(err);
+        return res.json({
+            error: false,
+            data: err
         });
     }
-
     try {
-        await formRecord.create(body);
-        res.status(200);
-        res.json({
-            error: false
-        });
+        await connection.asyncQuery(`
+                INSERT INTO
+                    tb_AssessmentQuestionnaire (participantID, hospitalUnitID, questionnaireID)
+                VALUES (?, ?, ?);`, params.participantID, params.hospitalUnitID, params.questionnaireID);
+
+        const result = await connection.asyncQuery(`
+                INSERT INTO
+                    tb_FormRecord (participantID, hospitalUnitID, questionnaireID, crfFormsID, dtRegistroForm)
+                VALUES (?, ?, ?, ?, NOW());`, params.participantID, params.hospitalUnitID, params.questionnaireID, params.crfFormsID);
+
+        if (result.insertId) {
+            connection.asyncCommit();
+            res.status(200);
+            return res.json({
+                error: false,
+                data: {
+                    formRecordID: result.insertId
+                }
+            });
+        }
+        await connection.asyncRollback();
+        throw new Error("Não foi inserido registro na tabela tb_FormRecord.");
+
     } catch (error) {
-        res.status(502);
+        await connection.asyncRollback();
+
+        res.status(500);
         console.error(error);
         return res.json({
             error: false,
-            message: error.message
+            data: error
         });
     }
 });
@@ -125,7 +147,7 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
     const body = req.body;
     try {
-        await validator.validateAll(body, formRecord.validations.updateValidation);
+        // await validator.validateAll(body, formRecord.validations.updateValidation);
     } catch (error) {
         res.status(422);
         res.json({
@@ -135,34 +157,33 @@ router.put('/:id', async (req, res) => {
     }
 
     try {
-        await formRecord.update(req.params.id, body);
+        // TO-DO
         res.status(200);
         res.json({
             error: false
         });
     } catch (error) {
-        res.status(502);
+        res.status(500);
         console.error(error);
         return res.json({
             error: false,
-            message: error.message
+            data: error
         });
     }
 });
-
 router.delete('/:id', async (req, res) => {
     try {
-        await formRecord.delete(req.params.id);
+        // TO-DO
         res.status(200);
         res.json({
             error: false
         });
     } catch (error) {
-        res.status(502);
+        res.status(500);
         console.error(error);
         return res.json({
             error: false,
-            message: error.message
+            data: error
         });
     }
 });

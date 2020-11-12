@@ -1,7 +1,10 @@
-import mysql, { Connection } from 'mysql';
+import mysql, { Connection, MysqlError, QueryOptions } from 'mysql';
 
 interface ExtendedConnection extends Connection {
-    asyncQuery(query: string, ...params: (string | number | boolean)[]): Promise<any[]>
+    asyncQuery(query: string, ...params: (string | number | boolean)[]): Promise<any>
+    asyncBeginTransaction(options?: QueryOptions, callback?: (err: MysqlError) => void): Promise<MysqlError>;
+    asyncCommit(options?: QueryOptions, callback?: (err: MysqlError) => void): Promise<MysqlError>;
+    asyncRollback(options?: QueryOptions, callback?: (err: MysqlError) => void): Promise<MysqlError>;
 }
 
 const connection: ExtendedConnection = mysql.createConnection({
@@ -16,6 +19,33 @@ connection.asyncQuery = (query: string, ...params: (string | number | boolean | 
     return new Promise((resolve, reject) => {
         try {
             return connection.query(query, params, (error, result, _) => error ? reject(error) : resolve(result));
+        } catch (error) {
+            return reject(error);
+        }
+    });
+}
+connection.asyncBeginTransaction = (options?: QueryOptions, callback?: (err: MysqlError) => void) => {
+    return new Promise((resolve, reject) => {
+        try {
+            return connection.beginTransaction(options, (error) => resolve(error));
+        } catch (error) {
+            return reject(error);
+        }
+    });
+}
+connection.asyncCommit = (options?: QueryOptions, callback?: (err: MysqlError) => void) => {
+    return new Promise((resolve, reject) => {
+        try {
+            return connection.commit(options, (error) => resolve(error));
+        } catch (error) {
+            return reject(error);
+        }
+    });
+}
+connection.asyncRollback = (options?: QueryOptions, callback?: (err: MysqlError) => void) => {
+    return new Promise((resolve, reject) => {
+        try {
+            return connection.rollback(options, (error) => resolve(error));
         } catch (error) {
             return reject(error);
         }

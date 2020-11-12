@@ -1,24 +1,23 @@
 export interface IQuestionnaireAnswers {
-    numeroPaciente: string;
-    hospital: string;
     formRecordID: number;
-    dataAplicacao: string;
-    respostaLivre?: null;
-    respostaLista?: string;
-    nomeLista?: string;
+    dtRegistroForm: string;
+    crfDescription: string;
+    answer: string;
+    listValueDescription: string;
+    listTypeDescription: string;
     questionID: number;
-    pergunta: string;
+    questionDescription: string;
     questionTypeID: number;
-    tipoPergunta: string;
-    questionGroupID?: number;
-    grupo?: string;
-    questaoPai?: null;
+    questionTypeDescription: string;
+    questionGroupID: number;
+    questionGroupDescription: string;
+    questaoPaiID: number;
 }
 
 export interface IQuestionnaireAnswersGroup {
     participantID: number;
-    numeroPaciente: string;
-    hospital: string;
+    medicalRecord: string;
+    hospitalUnitName: string;
     hospitalUnitID: number;
     answers: IQuestionnaireAnswers[];
 }

@@ -1,17 +1,16 @@
-/* Arquivo com as nomes de tabelas seguidas fielmente do banco de dados, não usar como modelo no código */
-interface tb_AssessmentQuestionnaire {
+export interface tb_AssessmentQuestionnaire {
 	participantID: number;
 	hospitalUnitID: number;
 	questionnaireID: number;
 };
 
-interface tb_CRFForms {
+export interface tb_CRFForms {
 	crfFormsID: number;
 	questionnaireID: number;
 	description: string;
 };
 
-interface tb_FormRecord {
+export interface tb_FormRecord {
 	formRecordID: number;
 	participantID: number;
 	hospitalUnitID: number;
@@ -20,33 +19,33 @@ interface tb_FormRecord {
 	dtRegistroForm: string;
 };
 
-interface tb_GroupRole {
+export interface tb_GroupRole {
 	groupRoleID: number;
 	description: string;
 };
 
-interface tb_GroupRolePermission {
+export interface tb_GroupRolePermission {
 	groupRoleID: number;
 	permissionID: number;
 };
 
-interface tb_HospitalUnit {
+export interface tb_HospitalUnit {
 	hospitalUnitID: number;
 	hospitalUnitName: string;
 };
 
-interface tb_ListOfValues {
+export interface tb_ListOfValues {
 	listOfValuesID: number;
 	listTypeID: number;
 	description: string;
 };
 
-interface tb_ListType {
+export interface tb_ListType {
 	listTypeID: number;
 	description: string;
 };
 
-interface tb_NotificationRecord {
+export interface tb_NotificationRecord {
 	userID: number;
 	profileID: number;
 	hospitalUnitID: number;
@@ -57,29 +56,29 @@ interface tb_NotificationRecord {
 	log: string;
 };
 
-interface tb_Participant {
+export interface tb_Participant {
 	participantID: number;
 	medicalRecord: string;
 };
 
-interface tb_Permission {
+export interface tb_Permission {
 	permissionID: number;
 	description: string;
 };
 
-interface tb_QuestionGroup {
+export interface tb_QuestionGroup {
 	questionGroupID: number;
 	description: string;
 	comment?: string;
 };
 
-interface tb_QuestionGroupForm {
+export interface tb_QuestionGroupForm {
 	crfFormsID: number;
 	questionID: number;
 	questionOrder: number;
 };
 
-interface tb_QuestionGroupFormRecord {
+export interface tb_QuestionGroupFormRecord {
 	questionGroupFormRecordID: number;
 	formRecordID: number;
 	crfFormsID: number;
@@ -88,12 +87,12 @@ interface tb_QuestionGroupFormRecord {
 	answer?: string;
 };
 
-interface tb_Questionnaire {
+export interface tb_Questionnaire {
 	questionnaireID: number;
 	description: string;
 };
 
-interface tb_Questions {
+export interface tb_Questions {
 	questionID: number;
 	description: string;
 	questionTypeID: number;
@@ -103,22 +102,22 @@ interface tb_Questions {
 	isAbout?: number;
 };
 
-interface tb_QuestionType {
+export interface tb_QuestionType {
 	questionTypeID: number;
 	description: string;
 };
 
-interface tb_RelationType {
+export interface tb_RelationType {
 	relationTypeID: number;
 	description: string;
 };
 
-interface tb_TermType {
+export interface tb_TermType {
 	termTypeID: number;
 	description: string;
 };
 
-interface tb_User {
+export interface tb_User {
 	userID: number;
 	login: string;
 	firstName: string;
@@ -129,7 +128,7 @@ interface tb_User {
 	foneNumber?: string;
 };
 
-interface tb_UserRole {
+export interface tb_UserRole {
 	userID: number;
 	groupRoleID: number;
 	hospitalUnitID: number;
