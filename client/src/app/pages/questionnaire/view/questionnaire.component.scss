@@ -1,4 +1,14 @@
-app-question {
-    display: inline-block;
-    margin: 0 16px;
+div.questions {
+    // display: flex;
+    // flex-wrap: wrap;
+    app-question {
+        // display: inline-block;
+        // margin: 0 16px;
+    }
+    mat-label, hr {
+        // flex: 0 0 100%;
+    }
+    mat-label {
+        font-weight: bold;
+    }
 }

@@ -1,18 +1,21 @@
+<h1 *ngIf="questionnaire && hospital && participant">{{ questionnaire.description }} - {{ hospital.hospitalUnitName }}/{{ participant.medicalRecord }}</h1>
 <mat-accordion>
     <mat-expansion-panel *ngFor="let pair of modules | keyvalue">
         <mat-expansion-panel-header>
             <mat-panel-title>
-                {{ pair.value.module.name }}
+                {{ pair.value.name }}
             </mat-panel-title>
             <mat-panel-description>
-                {{ pair.value.module.dtRegistroForm | date: 'dd/MM/yyyy hh:mm:ss' }}
+                {{ pair.value.dtRegistroForm | date: 'dd/MM/yyyy hh:mm:ss' }}
             </mat-panel-description>
         </mat-expansion-panel-header>
-        <div *ngIf="pair.value.groups">
-            <div *ngFor="let groupPair of pair.value.groups | keyvalue; first as first">
+        <button *ngIf="!(editMode | async)" (click)="edit(true)">Editar</button>
+        <button *ngIf="editMode | async" (click)="edit(false)">Salvar</button>
+        <div class="groups" *ngIf="pair.value.groups">
+            <div class="questions" *ngFor="let group of pair.value.groups; first as first">
                 <hr *ngIf="!first">
-                <h1>{{ groupPair.value.group.name }}</h1>
-                <app-question *ngFor="let question of groupPair.value.answers" [question]="question"></app-question>
+                <mat-label>{{ group.name }}</mat-label>
+                <app-question *ngFor="let question of group.answers" [question]="question" [editMode]="editMode"></app-question>
             </div>
         </div>
         <p *ngIf="!pair.value">Carregando...</p>

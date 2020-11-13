@@ -3,23 +3,20 @@ import { questionnaire } from '../models/questionnaire';
 import { validator } from 'indicative';
 
 const router = Router();
-router.get('/', async (req, res) => {
-    const result = await questionnaire.getAll();
-    res.status(200);
-    return res.json({
-        error: false,
-        data: result
-    });
-});
-
-router.get('/:id', async (req, res) => {
+router.get('/:id?', async (req, res) => {
     try {
-        const result = await questionnaire.getById(req.params.id);
+        let result;
+        if (req.params.id) {
+            result = await questionnaire.getById(req.params.id);
+        }
+        else {
+            result = await questionnaire.getAll();
+        }
         res.status(200);
-            return res.json({
-                error: false,
-                data: result
-            });
+        return res.json({
+            error: false,
+            data: result
+        });
     }
     catch (error) {
         res.status(404);

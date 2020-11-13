@@ -7,27 +7,36 @@ import { IQuestionnaire } from '../models/questionnaire';
 import { IResponse } from '../models/response';
 
 @Injectable({
-  providedIn: 'root'
+	providedIn: 'root'
 })
 export class QuestionnaireService {
 
-  constructor(private http: HttpClient) { }
+	constructor(private http: HttpClient) { }
 
-  getAll(): Observable<IQuestionnaire[]> {
-    return this.http.get<IResponse>(environment.apiUrl + '/questionnaire', { withCredentials: true }).pipe(
-      map(res => {
-        if (!res.error) return res.data as IQuestionnaire[];
-        return [];
-      })
-    );
-  }
+	getByID(id: string): Observable<IQuestionnaire> {
+		return this.http.get<IResponse>(environment.apiUrl + `/questionnaire/${id}`, { withCredentials: true }).pipe(
+			map(res => {
+				if (!res.error) return res.data;
+				return null;
+			})
+		);
+	}
 
-  create(data: IQuestionnaire): Observable<boolean> {
-    return this.http.post<IResponse>(environment.apiUrl + '/questionnaire', data, { withCredentials: true })
-    .pipe(
-      map(res => {
-        return !res.error;
-      })
-    );
-  }
+	getAll(): Observable<IQuestionnaire[]> {
+		return this.http.get<IResponse>(environment.apiUrl + '/questionnaire', { withCredentials: true }).pipe(
+			map(res => {
+				if (!res.error) return res.data;
+				return [];
+			})
+		);
+	}
+
+	create(data: IQuestionnaire): Observable<boolean> {
+		return this.http.post<IResponse>(environment.apiUrl + '/questionnaire', data, { withCredentials: true })
+			.pipe(
+				map(res => {
+					return !res.error;
+				})
+			);
+	}
 }

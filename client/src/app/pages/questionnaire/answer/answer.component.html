@@ -30,14 +30,14 @@
     <div>
         <mat-form-field appearance="fill">
             <mat-label>Módulo</mat-label>
-            <select matNativeControl [formControl]="participant" required>
+            <select matNativeControl [formControl]="module" required>
                 <option disabled>Escolha o módulo</option>
                 <option *ngFor="let module of modules" [ngValue]="module.crfFormsID">
                     {{ module.description }}
                 </option>
             </select>
-            <mat-error *ngIf="participant.invalid">
-                {{ participant.hasError('required') ? 'O campo de módulo é obrigatório' : '' }}
+            <mat-error *ngIf="module.invalid">
+                {{ module.hasError('required') ? 'O campo de módulo é obrigatório' : '' }}
             </mat-error>
         </mat-form-field>
     </div>

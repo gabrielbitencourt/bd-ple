@@ -8,27 +8,32 @@ import { NavbarComponent } from './components/navbar/navbar.component';
 import { FooterComponent } from './components/footer/footer.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { HttpInterceptorService } from './services/http-interceptor.service';
-import { QuestionComponent } from './components/question/question.component';
+import { MatNativeDateModule, MAT_DATE_LOCALE } from '@angular/material/core';
 
 @NgModule({
-  declarations: [
-    AppComponent,
-    NavbarComponent,
-    FooterComponent
-  ],
-  imports: [
-    BrowserModule,
-    AppRoutingModule,
-    BrowserAnimationsModule,
-    HttpClientModule
-  ],
-  providers: [
-    {
-      provide: HTTP_INTERCEPTORS,
-      useClass: HttpInterceptorService,
-      multi: true
-    }
-  ],
-  bootstrap: [AppComponent]
+	declarations: [
+		AppComponent,
+		NavbarComponent,
+		FooterComponent
+	],
+	imports: [
+		BrowserModule,
+		AppRoutingModule,
+		BrowserAnimationsModule,
+		HttpClientModule,
+		MatNativeDateModule
+	],
+	providers: [
+		{
+			provide: HTTP_INTERCEPTORS,
+			useClass: HttpInterceptorService,
+			multi: true
+		},
+		{
+			provide: MAT_DATE_LOCALE,
+			useValue: 'pt-BR'
+		},
+	],
+	bootstrap: [AppComponent]
 })
 export class AppModule { }

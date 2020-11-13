@@ -7,19 +7,29 @@ import { IParticipant } from '../models/participant';
 import { IResponse } from '../models/response';
 
 @Injectable({
-  providedIn: 'root'
+	providedIn: 'root'
 })
 export class ParticipantService {
 
-  constructor(private http: HttpClient) { }
+	constructor(private http: HttpClient) { }
 
-  getAll(): Observable<IParticipant[]> {
-    return this.http.get<IResponse>(environment.apiUrl + `/participant`, { withCredentials: true })
-      .pipe(
-        map(res => {
-          if (!res.error) return res.data;
-          return [];
-        })
-      );
-  }
+	getByID(id: string): Observable<IParticipant> {
+		return this.http.get<IResponse>(environment.apiUrl + `/participant/${id}`, { withCredentials: true })
+			.pipe(
+				map(res => {
+					if (!res.error) return res.data;
+					return [];
+				})
+			);
+	}
+
+	getAll(): Observable<IParticipant[]> {
+		return this.http.get<IResponse>(environment.apiUrl + `/participant`, { withCredentials: true })
+			.pipe(
+				map(res => {
+					if (!res.error) return res.data;
+					return [];
+				})
+			);
+	}
 }

@@ -48,7 +48,9 @@ router.get('/:questionnaireID/participant/:participantID/hospital/:hospitalUnitI
 
             qgfr.answer,
 
+            lv.listOfValuesID listValueID,
             lv.description listValueDescription,
+            q.listTypeID listTypeID,
             lt.description listTypeDescription,
 
             q.questionID,
@@ -66,18 +68,20 @@ router.get('/:questionnaireID/participant/:participantID/hospital/:hospitalUnitI
         LEFT JOIN tb_HospitalUnit h ON fr.hospitalUnitID = h.hospitalUnitID
         LEFT JOIN tb_Participant p ON fr.participantID = p.participantID
         LEFT JOIN tb_questiongroupformrecord qgfr ON qgfr.formRecordID = fr.formRecordID
-        LEFT JOIN tb_ListOfValues lv ON qgfr.listOfValuesID = lv.listOfValuesID
-        LEFT JOIN tb_ListType lt ON lv.listTypeID = lt.listTypeID
-        LEFT JOIN tb_Questions q ON qgfr.questionID = q.questionID
+        LEFT JOIN tb_QuestionGroupForm qgf ON crf.crfFormsID = qgf.crfFormsID
+        LEFT JOIN tb_Questions q ON qgf.questionID = q.questionID
         LEFT JOIN tb_Questions qs ON q.subordinateTo = qs.questionID
         LEFT JOIN tb_QuestionType qt ON q.questionTypeID = qt.questionTypeID
         LEFT JOIN tb_QuestionGroup qg ON q.questionGroupID = qg.questionGroupID
+        LEFT JOIN tb_ListOfValues lv ON qgfr.listOfValuesID = lv.listOfValuesID
+        LEFT JOIN tb_ListType lt ON q.listTypeID = lt.listTypeID
         WHERE
             fr.questionnaireID = ?
         AND
             h.hospitalUnitID = ?
         AND
-            p.participantID = ?;`;
+            p.participantID = ?
+        ORDER BY qgf.questionOrder ASC;`;
 
     try {
         const result = await connection.asyncQuery(query, req.params.questionnaireID, req.params.hospitalUnitID, req.params.participantID);
@@ -87,6 +91,7 @@ router.get('/:questionnaireID/participant/:participantID/hospital/:hospitalUnitI
             data: result
         });
     } catch (error) {
+        console.log(error);
         res.status(500);
         return res.json({
             error: false,

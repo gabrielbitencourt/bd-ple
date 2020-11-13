@@ -1,22 +1,26 @@
-import { Route } from '@angular/compiler/src/core';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { BehaviorSubject } from 'rxjs';
 import { first } from 'rxjs/operators';
+import { IHospital } from 'src/app/models/hospital';
+import { IParticipant } from 'src/app/models/participant';
+import { IQuestionnaire } from 'src/app/models/questionnaire';
 import { IQuestionnaireAnswers } from 'src/app/models/questionnaire-answers';
 import { FormRecordService } from 'src/app/services/form-record.service';
+import { HospitalService } from 'src/app/services/hospital.service';
+import { ParticipantService } from 'src/app/services/participant.service';
 import { QuestionnaireService } from 'src/app/services/questionnaire.service';
 
-interface ModuleTree {
-	[formRecordID: string]: {
-		module: any;
-		groups: {
-			[groupID: string]: {
-				group: any;
-				answers: IQuestionnaireAnswers[]
-			}
-		};
-	};
-}
+type ModuleTree = {
+	id: string;
+	name: string;
+	data: string;
+	groups: {
+		id: string;
+		name: string;
+		answers: IQuestionnaireAnswers[];
+	}[];
+};
 
 @Component({
 	selector: 'app-questionnaire',
@@ -25,9 +29,19 @@ interface ModuleTree {
 })
 export class QuestionnaireComponent implements OnInit {
 
-	modules: ModuleTree = {};
+	modules: ModuleTree[] = [];
+	questionnaire: IQuestionnaire;
+	hospital: IHospital;
+	participant: IParticipant;
 
-	constructor(private route: ActivatedRoute, private formRecordService: FormRecordService) { }
+	editMode = new BehaviorSubject<boolean>(false);
+
+	constructor(
+		private route: ActivatedRoute,
+		private formRecordService: FormRecordService,
+		private questionnaireService: QuestionnaireService,
+		private hospitalService: HospitalService,
+		private participantService: ParticipantService) { }
 
 	async ngOnInit(): Promise<void> {
 		const paramMap = await this.route.paramMap.pipe(first()).toPromise();
@@ -38,30 +52,53 @@ export class QuestionnaireComponent implements OnInit {
 			.pipe(first())
 			.toPromise();
 
+		this.questionnaireService.getByID(questionnaireID)
+			.subscribe(q => {
+				this.questionnaire = q;
+			});
+
+		this.hospitalService.getByID(hospitalUnitID)
+			.subscribe(h => {
+				this.hospital = h;
+			});
+
+		this.participantService.getByID(participantID)
+			.subscribe(p => {
+				this.participant = p;
+			});
+
+		const formsIndex = {};
+		let groupsIndex = {};
 		this.modules = answers.reduce((prev, curr) => {
-			if (!prev[curr.formRecordID]) {
-				prev[curr.formRecordID] = {
-					module: {
-						id: curr.formRecordID,
-						name: curr.crfDescription,
-						data: curr.dtRegistroForm
-					},
-					groups: {}
-				};
+			if (formsIndex[curr.formRecordID] === undefined) {
+				groupsIndex = {};
+				const id = prev.push({
+					id: curr.formRecordID,
+					name: curr.crfDescription,
+					data: curr.dtRegistroForm,
+					groups: []
+				});
+				formsIndex[curr.formRecordID] = id - 1;
 			}
-			if (!prev[curr.formRecordID].groups[curr.questionGroupID]) {
-				prev[curr.formRecordID].groups[curr.questionGroupID] = {
-					group: {
-						id: curr.questionGroupID,
-						name: curr.questionGroupDescription
-					},
+			const formIndex = formsIndex[curr.formRecordID];
+			if (groupsIndex[curr.questionGroupID] === undefined) {
+				const id = prev[formIndex].groups.push({
+					id: curr.questionGroupID,
+					name: curr.questionGroupDescription,
 					answers: []
-				};
+				});
+				groupsIndex[curr.questionGroupID] = id - 1;
 			}
-			prev[curr.formRecordID].groups[curr.questionGroupID].answers.push(curr);
+
+			const groupIndex = groupsIndex[curr.questionGroupID];
+			prev[formIndex].groups[groupIndex].answers.push(curr);
 			return prev;
-		}, {});
+		}, []);
 		console.log(this.modules);
+	}
+
+	edit() {
+		this.editMode.next(!this.editMode.getValue());
 	}
 
 }

@@ -1,16 +1,10 @@
 import { Router } from 'express';
-import { hospital } from '../models/hospital';
+import connection from '../database';
 
 const router = Router();
-router.get('/:id?', async (req, res) => {
+router.get('/:listID', async (req, res) => {
     try {
-        let result;
-        if (req.params.id) {
-            result = await hospital.getById(req.params.id);
-        }
-        else {
-            result = await hospital.getAll();
-        }
+        const result = await connection.asyncQuery("SELECT listOfValuesID, description FROM tb_listofvalues WHERE listTypeID = ?", req.params.listID);
         res.status(200);
         return res.json({
             error: false,
@@ -18,7 +12,6 @@ router.get('/:id?', async (req, res) => {
         });
     } catch (error) {
         res.status(500);
-        console.error(error);
         return res.json({
             error: true,
             data: error

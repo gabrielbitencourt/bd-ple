@@ -3,28 +3,18 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
-import { IHospital } from '../models/hospital';
+import { IListOption } from '../models/questionnaire-answers';
 import { IResponse } from '../models/response';
 
 @Injectable({
 	providedIn: 'root'
 })
-export class HospitalService {
+export class ListService {
 
 	constructor(private http: HttpClient) { }
 
-	getByID(id: string): Observable<IHospital> {
-		return this.http.get<IResponse>(environment.apiUrl + `/hospital/${id}`, { withCredentials: true })
-			.pipe(
-				map(res => {
-					if (!res.error) return res.data;
-					return [];
-				})
-			);
-	}
-
-	getAll(): Observable<IHospital[]> {
-		return this.http.get<IResponse>(environment.apiUrl + `/hospital`, { withCredentials: true })
+	getListOptions(listID: string): Observable<IListOption[]> {
+		return this.http.get<IResponse>(environment.apiUrl + `/list/${listID}`, { withCredentials: true })
 			.pipe(
 				map(res => {
 					if (!res.error) return res.data;
