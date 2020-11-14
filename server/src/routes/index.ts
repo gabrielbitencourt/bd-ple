@@ -7,6 +7,7 @@ import participantRoutes from './participant';
 import hospitalRoutes from './hospital';
 import crfRoutes from './crf';
 import listRoutes from './list';
+import answerRoutes from './answer';
 
 const router = Router();
 router.use('/auth', authRoutes);
@@ -16,4 +17,5 @@ router.use('/participant', passport.authenticate('jwt-cookie', { session: false 
 router.use('/hospital', passport.authenticate('jwt-cookie', { session: false }), hospitalRoutes);
 router.use('/crf', passport.authenticate('jwt-cookie', { session: false }), crfRoutes);
 router.use('/list', passport.authenticate('jwt-cookie', { session: false }), listRoutes);
+router.use('/answer', passport.authenticate('jwt-cookie', { session: false }), answerRoutes);
 export default router;

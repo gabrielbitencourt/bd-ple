@@ -7,39 +7,39 @@ import { IResponse } from '../models/response';
 import { IUser } from '../models/user';
 
 @Injectable({
-  providedIn: 'root'
+	providedIn: 'root'
 })
 export class AuthService {
 
-  loggedIn: BehaviorSubject<boolean> = new BehaviorSubject(false);
-  user: BehaviorSubject<IUser> = new BehaviorSubject(null);
+	loggedIn: BehaviorSubject<boolean> = new BehaviorSubject(false);
+	user: BehaviorSubject<IUser> = new BehaviorSubject(null);
 
 
-  constructor(private http: HttpClient) {
-    this.loggedIn.next(false);
-  }
+	constructor(private http: HttpClient) {
+		this.loggedIn.next(false);
+	}
 
-  refreshToken() {
-    return this.http.get<IResponse>(environment.apiUrl + '/auth/refresh', { withCredentials: true })
-      .pipe(
-        tap(res => {
-          if (!res.error) {
-            this.user.next(res.data);
-          }
-          this.loggedIn.next(!res.error);
-        })
-      );
-  }
+	refreshToken() {
+		return this.http.get<IResponse>(environment.apiUrl + '/auth/refresh')
+			.pipe(
+				tap(res => {
+					if (!res.error) {
+						this.user.next(res.data);
+					}
+					this.loggedIn.next(!res.error);
+				})
+			);
+	}
 
-  login(credentials: { login: string, password: string }) {
-    return this.http.post<IResponse>(environment.apiUrl + '/auth/login', credentials, { withCredentials: true })
-      .pipe(
-        tap(res => {
-          if (!res.error) {
-            this.user.next(res.data);
-          }
-          this.loggedIn.next(!res.error);
-        })
-      );
-  }
+	login(credentials: { login: string, password: string }) {
+		return this.http.post<IResponse>(environment.apiUrl + '/auth/login', credentials)
+			.pipe(
+				tap(res => {
+					if (!res.error) {
+						this.user.next(res.data);
+					}
+					this.loggedIn.next(!res.error);
+				})
+			);
+	}
 }

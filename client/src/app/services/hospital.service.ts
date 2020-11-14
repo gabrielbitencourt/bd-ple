@@ -13,8 +13,8 @@ export class HospitalService {
 
 	constructor(private http: HttpClient) { }
 
-	getByID(id: string): Observable<IHospital> {
-		return this.http.get<IResponse>(environment.apiUrl + `/hospital/${id}`, { withCredentials: true })
+	getByID(id: number): Observable<IHospital> {
+		return this.http.get<IResponse>(environment.apiUrl + `/hospital/${id}`)
 			.pipe(
 				map(res => {
 					if (!res.error) return res.data;
@@ -24,7 +24,7 @@ export class HospitalService {
 	}
 
 	getAll(): Observable<IHospital[]> {
-		return this.http.get<IResponse>(environment.apiUrl + `/hospital`, { withCredentials: true })
+		return this.http.get<IResponse>(environment.apiUrl + `/hospital`)
 			.pipe(
 				map(res => {
 					if (!res.error) return res.data;

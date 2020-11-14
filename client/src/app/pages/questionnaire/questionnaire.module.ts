@@ -12,24 +12,26 @@ import { MatInputModule } from '@angular/material/input';
 import { MatListModule } from '@angular/material/list';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { QuestionModule } from 'src/app/components/question/question.module';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 
 @NgModule({
-  declarations: [
-    QuestionnaireComponent,
-    AnswerComponent
-  ],
-  imports: [
-    CommonModule,
-    QuestionnaireRoutingModule,
-    ReactiveFormsModule,
-    MatInputModule,
-    MatFormFieldModule,
-    MatButtonModule,
-    MatIconModule,
-    MatListModule,
-    MatExpansionModule,
-    QuestionModule
-  ]
+	declarations: [
+		QuestionnaireComponent,
+		AnswerComponent
+	],
+	imports: [
+		CommonModule,
+		QuestionnaireRoutingModule,
+		ReactiveFormsModule,
+		MatInputModule,
+		MatFormFieldModule,
+		MatButtonModule,
+		MatIconModule,
+		MatListModule,
+		MatExpansionModule,
+		MatTooltipModule,
+		QuestionModule
+	]
 })
 export class QuestionnaireModule { }

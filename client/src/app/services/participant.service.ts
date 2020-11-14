@@ -13,8 +13,8 @@ export class ParticipantService {
 
 	constructor(private http: HttpClient) { }
 
-	getByID(id: string): Observable<IParticipant> {
-		return this.http.get<IResponse>(environment.apiUrl + `/participant/${id}`, { withCredentials: true })
+	getByID(id: number): Observable<IParticipant> {
+		return this.http.get<IResponse>(environment.apiUrl + `/participant/${id}`)
 			.pipe(
 				map(res => {
 					if (!res.error) return res.data;
@@ -24,7 +24,7 @@ export class ParticipantService {
 	}
 
 	getAll(): Observable<IParticipant[]> {
-		return this.http.get<IResponse>(environment.apiUrl + `/participant`, { withCredentials: true })
+		return this.http.get<IResponse>(environment.apiUrl + `/participant`)
 			.pipe(
 				map(res => {
 					if (!res.error) return res.data;

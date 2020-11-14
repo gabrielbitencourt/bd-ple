@@ -1,50 +1,50 @@
-<!-- <mat-label>{{ question.questionDescription }}</mat-label> -->
-<div
-    *ngIf="question.questionTypeDescription == 'Text_Question' || question.questionTypeDescription == 'Ventilation question' || question.questionTypeDescription == 'Number question'">
-    <mat-label *ngIf="!(editMode | async)">{{ question.questionDescription }}</mat-label>
-    <p *ngIf="!(editMode | async)">{{ question.answer }}</p>
+<div *ngIf="question.questionTypeDescription == 'Text_Question' || question.questionTypeDescription == 'Ventilation question' || question.questionTypeDescription == 'Number question'">
+    <mat-label>{{ question.questionDescription }}: </mat-label>
+    <p *ngIf="!(editMode | async) && question.answer">{{ question.answer }}</p>
 
-    <mat-form-field *ngIf="editMode | async" appearance="fill">
-        <mat-label>{{ question.questionDescription }}</mat-label>
-        <input matInput [type]="question.questionTypeDescription == 'Number question' ? 'number' : 'text'"
-            [(ngModel)]="question.answer">
+    <mat-form-field class="inline-mat-form-field" *ngIf="!question.answer || (editMode | async)">
+        <input matInput [(ngModel)]="question.answer" [disabled]="!(editMode | async)"
+            [type]="question.questionTypeDescription == 'Number question' ? 'number' : 'text'">
     </mat-form-field>
 </div>
 
 <div *ngIf="question.questionTypeDescription == 'Boolean_Question'">
-    <mat-checkbox [disabled]="!(editMode | async)" [(ngModel)]="question.answer">{{ question.questionDescription }}
+    <mat-checkbox [disabled]="!(editMode | async)" [(ngModel)]="question.answer">
+        {{ question.questionDescription }}
     </mat-checkbox>
 </div>
 
 <div *ngIf="question.questionTypeDescription == 'Date question'">
-    <mat-label *ngIf="!(editMode | async)">{{ question.questionDescription }}</mat-label>
-    <p *ngIf="!(editMode | async)">{{ question.answer }}</p>
+    <mat-label>{{ question.questionDescription }}: </mat-label>
+    <p *ngIf="!(editMode | async) && question.answer">{{ question.answer | date: 'dd/MM/yyyy' }}</p>
 
-    <mat-form-field *ngIf="editMode | async" appearance="fill">
-        <mat-label>{{ question.questionDescription }}</mat-label>
-        <input matInput (focus)="openDatePicker(picker)" [matDatepicker]="picker">
+    <mat-form-field class="inline-mat-form-field" *ngIf="!question.answer || (editMode | async)">
+        <!-- <mat-label>{{ question.questionDescription }}: </mat-label> -->
+        <input matInput [(ngModel)]="question.answer" [disabled]="!(editMode | async)" (focus)="openDatePicker(picker)" [matDatepicker]="picker">
         <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
         <mat-datepicker #picker></mat-datepicker>
     </mat-form-field>
 </div>
 
 <div *ngIf="question.questionTypeDescription == 'Laboratory question'">
-    <mat-label *ngIf="!(editMode | async)">{{ question.questionDescription }}</mat-label>
+    <mat-label>{{ question.questionDescription }}: </mat-label>
     <p *ngIf="!(editMode | async) && question.answer !== false">{{ question.answer }}</p>
 
-    <mat-form-field *ngIf="(editMode | async)" appearance="fill">
-        <mat-label>{{ question.questionDescription }}</mat-label>
-        <input matInput *ngIf="question.answer !== false" type="text" [(ngModel)]="question.answer">
+    <mat-form-field class="inline-mat-form-field"
+        *ngIf="(editMode | async) || ((editMode | async) && question.answer === false) || (!(editMode | async) && question.answer !== false && !question.answer)">
+        <input matInput *ngIf="question.answer !== false" type="text" [disabled]="!(editMode | async)" [(ngModel)]="question.answer">
         <input matInput *ngIf="question.answer === false" disabled>
     </mat-form-field>
-    <mat-checkbox [disabled]="!(editMode | async)" (change)="notDoneChanged($event)" [value]="question.answer">Não feito
+    <mat-checkbox class="not-done-checkbox" [disabled]="!(editMode | async)" (change)="notDoneChanged($event)" [value]="question.answer"
+        *ngIf="(editMode | async) || (!question.answer && question.answer !== false && !(editMode | async)) || (question.answer === false && !(editMode | async))">
+        Não feito
     </mat-checkbox>
 
 </div>
 
 <div *ngIf="question.questionTypeDescription == 'YNU_Question'">
-    <mat-label>{{ question.questionDescription }}</mat-label>
-    <mat-radio-group [disabled]="!(editMode | async)">
+    <mat-label>{{ question.questionDescription }}: </mat-label>
+    <mat-radio-group [(ngModel)]="question.answer" [disabled]="!(editMode | async)">
         <mat-radio-button value="Yes">Yes</mat-radio-button>
         <mat-radio-button value="No">No</mat-radio-button>
         <mat-radio-button value="Unknown">Unknown</mat-radio-button>
@@ -52,8 +52,8 @@
 </div>
 
 <div *ngIf="question.questionTypeDescription == 'YNUN_Question'">
-    <mat-label>{{ question.questionDescription }}</mat-label>
-    <mat-radio-group [disabled]="!(editMode | async)">
+    <mat-label>{{ question.questionDescription }}: </mat-label>
+    <mat-radio-group [(ngModel)]="question.answer" [disabled]="!(editMode | async)">
         <mat-radio-button value="Yes">Yes</mat-radio-button>
         <mat-radio-button value="No">No</mat-radio-button>
         <mat-radio-button value="Unknown">Unknown</mat-radio-button>
@@ -62,29 +62,34 @@
 </div>
 
 <div *ngIf="question.questionTypeDescription == 'PNNot_done_Question'">
-    <mat-label>{{ question.questionDescription }}</mat-label>
-    <mat-radio-group [disabled]="!(editMode | async)">
+    <mat-label>{{ question.questionDescription }}: </mat-label>
+    <mat-radio-group [(ngModel)]="question.answer" [disabled]="!(editMode | async)">
         <mat-radio-button value="Positive">Positive</mat-radio-button>
         <mat-radio-button value="Negative">Negative</mat-radio-button>
         <mat-radio-button value="Not done">Not done</mat-radio-button>
     </mat-radio-group>
 </div>
 
-<div *ngIf="question.questionTypeDescription == 'List question'">
-    <mat-label *ngIf="!question.options || question.options.length <= 5">{{ question.questionDescription }}</mat-label>
-    <mat-radio-group *ngIf="question.options && question.options.length > 0 && question.options.length < 5"
-        [disabled]="!(editMode | async)">
-        <mat-radio-button *ngFor="let option of question.options" value="option.listOfValuesID">{{ option.description }}
+<div *ngIf="question.questionTypeDescription == 'List question' && question.options && question.options.length > 0">
+    <mat-label>{{ question.questionDescription }}: </mat-label> <!--*ngIf="!(editMode | async) || question.options.length <= 5"-->
+    <mat-radio-group [(ngModel)]="question.listValueID" *ngIf="question.options.length <= 5" [disabled]="!(editMode | async)">
+        <mat-radio-button *ngFor="let option of question.options" [value]="option.listOfValuesID">
+            {{ option.description }}
         </mat-radio-button>
     </mat-radio-group>
-    <mat-form-field *ngIf="question.options &&question.options.length > 5" appearance="fill">
-        <mat-label>{{ question.questionDescription }}</mat-label>
-        <select matNativeControl [disabled]="!(editMode | async)">
+    <p *ngIf="question.options.length > 5 && !(editMode | async) && optionDescription(question) as desc">
+        {{ desc }}
+    </p>
+    <mat-form-field class="inline-mat-form-field" *ngIf="question.options.length > 5 && ((editMode | async) || !optionDescription(question))">
+        <select matNativeControl [(ngModel)]="question.listValueID" [disabled]="!(editMode | async)">
             <option selected disabled>Selecione um valor</option>
-            <option *ngFor="let option of question.options" value="option.listOfValuesID">
+            <option *ngFor="let option of question.options" [value]="option.listOfValuesID">
                 {{ option.description }}
             </option>
         </select>
     </mat-form-field>
+</div>
 
+<div *ngIf="question.answer || question.listValueID">
+    <app-question *ngFor="let q of question.subordinates" [question]="q" [editMode]="editMode"></app-question>
 </div>

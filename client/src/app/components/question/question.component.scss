@@ -1,0 +1,20 @@
+div {
+    margin-bottom: 12px;
+    & > mat-label {
+        font-weight: bold;
+    }
+}
+mat-radio-group {
+    display: block;
+    mat-radio-button {
+        margin-right: 8px;
+    }
+}
+mat-checkbox.not-done-checkbox {
+    padding-left: 8px;
+}
+p {
+    margin-bottom: 0;
+    display: inline-block;
+    color: rgba(0,0,0,.42)
+}

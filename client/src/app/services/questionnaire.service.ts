@@ -13,8 +13,8 @@ export class QuestionnaireService {
 
 	constructor(private http: HttpClient) { }
 
-	getByID(id: string): Observable<IQuestionnaire> {
-		return this.http.get<IResponse>(environment.apiUrl + `/questionnaire/${id}`, { withCredentials: true }).pipe(
+	getByID(id: number): Observable<IQuestionnaire> {
+		return this.http.get<IResponse>(environment.apiUrl + `/questionnaire/${id}`).pipe(
 			map(res => {
 				if (!res.error) return res.data;
 				return null;
@@ -23,7 +23,7 @@ export class QuestionnaireService {
 	}
 
 	getAll(): Observable<IQuestionnaire[]> {
-		return this.http.get<IResponse>(environment.apiUrl + '/questionnaire', { withCredentials: true }).pipe(
+		return this.http.get<IResponse>(environment.apiUrl + '/questionnaire').pipe(
 			map(res => {
 				if (!res.error) return res.data;
 				return [];
@@ -32,7 +32,7 @@ export class QuestionnaireService {
 	}
 
 	create(data: IQuestionnaire): Observable<boolean> {
-		return this.http.post<IResponse>(environment.apiUrl + '/questionnaire', data, { withCredentials: true })
+		return this.http.post<IResponse>(environment.apiUrl + '/questionnaire', data)
 			.pipe(
 				map(res => {
 					return !res.error;

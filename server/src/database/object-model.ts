@@ -19,7 +19,7 @@ export class ObjectModel<T> {
 		return data;
 	}
 
-	async getById(id: string | string[]): Promise<T> {
+	async getByID(id: string | string[]): Promise<T> {
 		const data = await connection.asyncQuery(`SELECT * FROM ${this.table} WHERE ${this.fields[0]} = ${id};`) as T[];
 		if (data.length) return data[0];
 		throw new Error(`Entidade não encontrada na tabela ${this.table} com ${this.fields[0]} = ${id}.`);

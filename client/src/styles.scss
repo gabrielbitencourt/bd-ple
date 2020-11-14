@@ -34,3 +34,16 @@ a:hover {
 }
 html, body { height: 100%; }
 body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+
+mat-form-field.inline-mat-form-field {
+  .mat-form-field-wrapper {
+      padding-bottom: 0 !important;
+      .mat-form-field-infix {
+          border-top: 0 !important;
+          padding-bottom: 0 !important;
+      }
+      .mat-form-field-underline {
+          bottom: 0 !important;
+      }
+  }
+}

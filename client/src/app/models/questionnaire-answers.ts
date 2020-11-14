@@ -1,16 +1,18 @@
 export interface IListOption {
-	listOfValuesID: string;
+	listOfValuesID: number;
 	description: string;
 }
 
 export interface IQuestionnaireAnswers {
+	questionGroupFormRecordID: number;
 	formRecordID: number;
 	dtRegistroForm: string;
+	crfFormsID: number;
 	crfDescription: string;
 	answer: any;
-	listValueID: string;
+	listValueID: number;
 	listValueDescription: string;
-	listTypeID: string;
+	listTypeID: number;
 	listTypeDescription: string;
 	questionID: number;
 	questionDescription: string;
@@ -18,14 +20,7 @@ export interface IQuestionnaireAnswers {
 	questionTypeDescription: string;
 	questionGroupID: number;
 	questionGroupDescription: string;
-	questaoPaiID: number;
+	subordinateCount: number;
 	options?: IListOption[];
-}
-
-export interface IQuestionnaireAnswersGroup {
-	participantID: number;
-	medicalRecord: string;
-	hospitalUnitName: string;
-	hospitalUnitID: number;
-	answers: IQuestionnaireAnswers[];
+	subordinates?: IQuestionnaireAnswers[];
 }

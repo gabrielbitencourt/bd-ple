@@ -7,7 +7,7 @@ router.get('/:id?', async (req, res) => {
     try {
         let result;
         if (req.params.id) {
-            result = await questionnaire.getById(req.params.id);
+            result = await questionnaire.getByID(req.params.id);
         }
         else {
             result = await questionnaire.getAll();

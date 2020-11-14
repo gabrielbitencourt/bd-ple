@@ -1,14 +1,19 @@
+h1, h3#participant {
+    margin-bottom: 0;
+}
+h3 {
+    color: #9e9e9e;
+}
 div.questions {
-    // display: flex;
-    // flex-wrap: wrap;
-    app-question {
-        // display: inline-block;
-        // margin: 0 16px;
-    }
-    mat-label, hr {
-        // flex: 0 0 100%;
-    }
-    mat-label {
+    h4 {
         font-weight: bold;
+    }
+}
+#action-buttons {
+    position: fixed;
+    bottom: 20px;
+    right: 26px;
+    button {
+        margin: 2px;
     }
 }

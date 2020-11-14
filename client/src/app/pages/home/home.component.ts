@@ -7,47 +7,49 @@ import { FormRecordService } from 'src/app/services/form-record.service';
 import { QuestionnaireService } from 'src/app/services/questionnaire.service';
 
 @Component({
-  selector: 'app-home',
-  templateUrl: './home.component.html',
-  styleUrls: ['./home.component.scss']
+	selector: 'app-home',
+	templateUrl: './home.component.html',
+	styleUrls: ['./home.component.scss']
 })
 export class HomeComponent implements OnInit {
 
-  questionnaires: IQuestionnaire[] = [];
+	questionnaires: IQuestionnaire[] = [];
 
-  description = new FormControl('', [
-    Validators.required,
-    Validators.maxLength(255)
-  ]);
+	description = new FormControl('', [
+		Validators.required,
+		Validators.maxLength(255)
+	]);
 
-  createForm = new FormGroup({
-    description: this.description,
-  });
+	createForm = new FormGroup({
+		description: this.description,
+	});
 
-  constructor(private questionnaireService: QuestionnaireService, private formRecordService: FormRecordService) { }
+	constructor(private questionnaireService: QuestionnaireService, private formRecordService: FormRecordService) { }
 
-  ngOnInit(): void {
-    this.loadQuestionnaires();
-  }
+	ngOnInit(): void {
+		this.loadQuestionnaires();
+	}
 
-  async loadQuestionnaires() {
-    this.questionnaires = await this.questionnaireService.getAll().pipe(first()).toPromise();
-  }
+	async loadQuestionnaires(): Promise<void> {
+		this.questionnaires = await this.questionnaireService.getAll().pipe(first()).toPromise();
+	}
 
-  async groupsFromQuestionnaire(questionnaire: IQuestionnaire) {
-    if (!questionnaire.groups) {
-      questionnaire.groups = await this.formRecordService.getAnswersGroups(questionnaire.questionnaireID).pipe(first()).toPromise();
-    }
-  }
+	async groupsFromQuestionnaire(questionnaire: IQuestionnaire): Promise<void> {
+		if (!questionnaire.groups) {
+			questionnaire.groups = await this.formRecordService.getRespondantGroups(questionnaire.questionnaireID)
+				.pipe(first())
+				.toPromise();
+		}
+	}
 
-  async createQuestionnaire(panel: MatExpansionPanel) {
-    const data: IQuestionnaire = { ...this.createForm.value };
-    const created = await this.questionnaireService.create(data).pipe(first()).toPromise();
-    if (created) {
-      this.questionnaires.push(data);
-      this.createForm.reset();
-      panel.close();
-    }
-  }
+	async createQuestionnaire(panel: MatExpansionPanel): Promise<void> {
+		const data: IQuestionnaire = { ...this.createForm.value };
+		const created = await this.questionnaireService.create(data).pipe(first()).toPromise();
+		if (created) {
+			this.questionnaires.push(data);
+			this.createForm.reset();
+			panel.close();
+		}
+	}
 
 }

@@ -13,8 +13,8 @@ export class ListService {
 
 	constructor(private http: HttpClient) { }
 
-	getListOptions(listID: string): Observable<IListOption[]> {
-		return this.http.get<IResponse>(environment.apiUrl + `/list/${listID}`, { withCredentials: true })
+	getListOptions(listID: number): Observable<IListOption[]> {
+		return this.http.get<IResponse>(environment.apiUrl + `/list/${listID}`)
 			.pipe(
 				map(res => {
 					if (!res.error) return res.data;

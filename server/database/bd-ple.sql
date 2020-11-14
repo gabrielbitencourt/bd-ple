@@ -25,42 +25,6 @@ CREATE DATABASE IF NOT EXISTS `bd-ple` DEFAULT CHARACTER SET latin1 COLLATE lati
 USE `bd-ple`;
 
 DELIMITER $$
---
--- Procedimentos
---
-DROP PROCEDURE IF EXISTS `getqst_rsp_modulo`$$
-CREATE DEFINER=`root`@`localhost` PROCEDURE `getqst_rsp_modulo` (`p_crfformid` INTEGER)  BEGIN
- select crfformsid as modId, questionid as qstId,
-	      translate('pt-br', questionGroup) as dsc_qst_grp,
-		 translate('pt-br', question) as dsc_qst,
-	 		    questionType as qst_type,
-	            (select  GROUP_CONCAT(translate('pt-br',tlv.description) ORDER BY 1 DESC SEPARATOR ' | ') as listofvalue from tb_listofvalues tlv
-                 where listtypeid = tb_Questionario.listtypeid ) as rsp_pad,
-	             translate('pt-br', questaosubordinada_a) as sub_qst
-		from (
-			select crfformsid, questionid, questionorder, 
-				   formulario, 
-				   (case when questiongroup is null then '' else questiongroup end) as questionGroup,
-				   (case when commentquestiongroup is null then '' else commentquestiongroup end) as commentquestiongroup,
-				   Question,
-				   QuestionType, listTypeResposta, listTypeID, QuestaoSubordinada_A, QuestaoReferente_A
-			from (
-			select t5.crfformsid, t1.questionid, t9.questionorder,
-				   t5.description as formulario,
-				   (select t2.description from tb_questiongroup t2 where t2.questiongroupid = t1.questiongroupid) as questionGroup,
-				   (select t2.comment from tb_questiongroup t2 where t2.questiongroupid = t1.questiongroupid) as commentquestionGroup,
-					t1.description as question,
-				   (select t3.description as questionType from tb_questiontype t3 where t3.questiontypeid = t1.questiontypeid) as questionType,
-				   (select t6.description from tb_listType t6 where t6.listtypeid = t1.listtypeid) as listTypeResposta,
-				   t1.listtypeid,
-				   (select description from tb_questions t7 where t7.questionId = t1.subordinateTo) as QuestaoSubordinada_A,
-				   (select description from tb_questions t8 where t8.questionId = t1.isabout) as QuestaoReferente_A
-			from tb_questions t1,  tb_crfForms t5, tb_questionGroupForm t9
-			where t5.crfformsid = p_crfformid and
-			t9.crfformsid = t5.crfformsid and t9.questionid = t1.questionid
-			) as tabela_Formulario ) as tb_Questionario
-			Order by crfformsid, questionorder;	
-END$$
 
 --
 -- Funções
@@ -101,118 +65,101 @@ DELIMITER ;
 --
 -- Estrutura para tabela `tb_assessmentquestionnaire`
 --
-
 DROP TABLE IF EXISTS `tb_assessmentquestionnaire`;
 CREATE TABLE `tb_assessmentquestionnaire` (
   `participantID` int(10) NOT NULL COMMENT '(pt-br)  Chave estrangeira para a tabela tb_Patient.\r\n(en) Foreign key to the tb_Patient table.',
   `hospitalUnitID` int(10) NOT NULL COMMENT '(pt-br) Chave estrangeira para tabela tb_HospitalUnit.\r\n(en) Foreign key for the tp_HospitalUnit table.',
-  `questionnaireID` int(10) NOT NULL
+  `questionnaireID` int(10) NOT NULL,
+  PRIMARY KEY (`participantID`, `hospitalUnitID`, `questionnaireID`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 --
--- Tabela truncada antes do insert `tb_assessmentquestionnaire`
+-- Tabela truncada `tb_assessmentquestionnaire`
 --
-
 TRUNCATE TABLE `tb_assessmentquestionnaire`;
 -- --------------------------------------------------------
 
 --
 -- Estrutura para tabela `tb_crfforms`
 --
-
 DROP TABLE IF EXISTS `tb_crfforms`;
 CREATE TABLE `tb_crfforms` (
-  `crfFormsID` int(10) NOT NULL,
+  `crfFormsID` int(10) NOT NULL AUTO_INCREMENT,
   `questionnaireID` int(10) NOT NULL,
-  `description` varchar(255) NOT NULL COMMENT '(pt-br) Descrição .\r\n(en) description.'
+  `description` varchar(255) NOT NULL COMMENT '(pt-br) Descrição .\r\n(en) description.',
+  PRIMARY KEY (`crfFormsID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='(pt-br)\r\ntb_CRFForms identifica o tipo do formulario refere-se ao Questionnaire Subsection da Ontologia:\r\nAdmissão - Modulo 1\r\nAcompanhamento - Modulo 2\r\nDesfecho - Modulo 3\r\n(en)\r\ntb_CRFForms identifies the type of the form refers to the Questionnaire Subsection of Ontology: Admission - Module 1 Monitoring - Module 2 Outcome - Module 3';
 
 --
 -- Tabela truncada antes do insert `tb_crfforms`
 --
-
 TRUNCATE TABLE `tb_crfforms`;
---
--- Despejando dados para a tabela `tb_crfforms`
---
-
-INSERT INTO `tb_crfforms` (`crfFormsID`, `questionnaireID`, `description`) VALUES
-(1, 1, 'Admission form'),
-(2, 1, 'Follow-up'),
-(3, 1, 'Discharge/death form');
+INSERT INTO `tb_crfforms` (`questionnaireID`, `description`) VALUES
+(1, 'Admission form'),
+(1, 'Follow-up'),
+(1, 'Discharge/death form');
 
 -- --------------------------------------------------------
 
 --
 -- Estrutura para tabela `tb_formrecord`
 --
-
 DROP TABLE IF EXISTS `tb_formrecord`;
 CREATE TABLE `tb_formrecord` (
-  `formRecordID` int(10) NOT NULL,
+  `formRecordID` int(10) NOT NULL AUTO_INCREMENT,
   `participantID` int(10) NOT NULL,
   `hospitalUnitID` int(10) NOT NULL,
   `questionnaireID` int(10) NOT NULL,
   `crfFormsID` int(10) NOT NULL,
-  `dtRegistroForm` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  `dtRegistroForm` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`formRecordID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
--- Tabela truncada antes do insert `tb_formrecord`
+-- Tabela truncada `tb_formrecord`
 --
-
 TRUNCATE TABLE `tb_formrecord`;
 -- --------------------------------------------------------
 
 --
 -- Estrutura para tabela `tb_grouprole`
 --
-
 DROP TABLE IF EXISTS `tb_grouprole`;
 CREATE TABLE `tb_grouprole` (
-  `groupRoleID` bigint(20) UNSIGNED NOT NULL,
-  `description` varchar(255) NOT NULL
+  `groupRoleID` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `description` varchar(255) NOT NULL,
+  PRIMARY KEY (`groupRoleID`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 --
 -- Tabela truncada antes do insert `tb_grouprole`
 --
-
 TRUNCATE TABLE `tb_grouprole`;
---
--- Despejando dados para a tabela `tb_grouprole`
---
-
-INSERT INTO `tb_grouprole` (`groupRoleID`, `description`) VALUES
-(1, 'Administrador'),
-(2, 'ETL - Arquivos'),
-(3, 'ETL - BD a BD'),
-(4, 'Gestor de Ontologia'),
-(5, 'Gestor de Repositório'),
-(6, 'Notificador Médico'),
-(7, 'Notificador Profissional de Saúde');
+INSERT INTO `tb_grouprole` (`description`) VALUES
+('Administrador'),
+('ETL - Arquivos'),
+('ETL - BD a BD'),
+('Gestor de Ontologia'),
+('Gestor de Repositório'),
+('Notificador Médico'),
+('Notificador Profissional de Saúde');
 
 -- --------------------------------------------------------
 
 --
 -- Estrutura para tabela `tb_grouprolepermission`
 --
-
 DROP TABLE IF EXISTS `tb_grouprolepermission`;
 CREATE TABLE `tb_grouprolepermission` (
   `groupRoleID` int(11) NOT NULL,
-  `permissionID` int(11) NOT NULL
+  `permissionID` int(11) NOT NULL,
+  PRIMARY KEY (`groupRoleID`, `permissionID`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 --
 -- Tabela truncada antes do insert `tb_grouprolepermission`
 --
-
 TRUNCATE TABLE `tb_grouprolepermission`;
---
--- Despejando dados para a tabela `tb_grouprolepermission`
---
-
 INSERT INTO `tb_grouprolepermission` (`groupRoleID`, `permissionID`) VALUES
 (1, 4),
 (2, 1),
@@ -228,47 +175,37 @@ INSERT INTO `tb_grouprolepermission` (`groupRoleID`, `permissionID`) VALUES
 --
 -- Estrutura para tabela `tb_hospitalunit`
 --
-
 DROP TABLE IF EXISTS `tb_hospitalunit`;
 CREATE TABLE `tb_hospitalunit` (
-  `hospitalUnitID` int(10) NOT NULL,
-  `hospitalUnitName` varchar(500) NOT NULL COMMENT '(pt-br) Nome da unidade hospitalar.\r\n(en) Name of the hospital unit.'
+  `hospitalUnitID` int(10) NOT NULL AUTO_INCREMENT,
+  `hospitalUnitName` varchar(500) NOT NULL COMMENT '(pt-br) Nome da unidade hospitalar.\r\n(en) Name of the hospital unit.',
+  PRIMARY KEY (`hospitalUnitID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='(pt-br) Tabela para identificação de unidades hospitalares.\r\n(en) Table for hospital units identification.';
 
 --
 -- Tabela truncada antes do insert `tb_hospitalunit`
 --
-
 TRUNCATE TABLE `tb_hospitalunit`;
---
--- Despejando dados para a tabela `tb_hospitalunit`
---
-
-INSERT INTO `tb_hospitalunit` (`hospitalUnitID`, `hospitalUnitName`) VALUES
-(1, 'Hospital Exemplo'),
-(2, 'Hospital Teste');
+INSERT INTO `tb_hospitalunit` (`hospitalUnitName`) VALUES
+('Hospital Exemplo'),
+('Hospital Teste');
 
 -- --------------------------------------------------------
 
 --
 -- Estrutura para tabela `tb_language`
 --
-
 DROP TABLE IF EXISTS `tb_language`;
 CREATE TABLE `tb_language` (
-  `languageID` int(11) NOT NULL,
-  `description` varchar(255) NOT NULL
+  `languageID` int(11) NOT NULL AUTO_INCREMENT,
+  `description` varchar(255) NOT NULL,
+  PRIMARY KEY (`languageID`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 --
 -- Tabela truncada antes do insert `tb_language`
 --
-
 TRUNCATE TABLE `tb_language`;
---
--- Despejando dados para a tabela `tb_language`
---
-
 INSERT INTO `tb_language` (`languageID`, `description`) VALUES
 (1, 'pt-br');
 
@@ -277,393 +214,378 @@ INSERT INTO `tb_language` (`languageID`, `description`) VALUES
 --
 -- Estrutura para tabela `tb_listofvalues`
 --
-
 DROP TABLE IF EXISTS `tb_listofvalues`;
 CREATE TABLE `tb_listofvalues` (
-  `listOfValuesID` int(10) NOT NULL,
+  `listOfValuesID` int(10) NOT NULL AUTO_INCREMENT,
   `listTypeID` int(10) NOT NULL,
-  `description` varchar(255) NOT NULL COMMENT '(pt-br) Descrição.\r\n(en) description.'
+  `description` varchar(255) NOT NULL COMMENT '(pt-br) Descrição.\r\n(en) description.',
+  PRIMARY KEY (`listOfValuesID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='(pt-br) Representa todos os valores padronizados do formulário.\r\n(en) Represents all standard values on the form.';
 
 --
 -- Tabela truncada antes do insert `tb_listofvalues`
 --
-
 TRUNCATE TABLE `tb_listofvalues`;
---
--- Despejando dados para a tabela `tb_listofvalues`
---
-
-INSERT INTO `tb_listofvalues` (`listOfValuesID`, `listTypeID`, `description`) VALUES
-(1, 1, 'Interferon alpha'),
-(2, 1, 'Interferon beta'),
-(3, 1, 'Lopinavir/Ritonavir'),
-(4, 1, 'Neuraminidase inhibitor'),
-(5, 1, 'Ribavirin'),
-(6, 2, 'Alert'),
-(7, 2, 'Pain'),
-(8, 2, 'Unresponsive'),
-(9, 2, 'Verbal'),
-(10, 3, 'MERS-CoV'),
-(11, 3, 'SARS-CoV-2'),
-(12, 4, 'Inhaled'),
-(13, 4, 'Intravenous'),
-(14, 4, 'Oral'),
-(15, 5, 'Afghanistan'),
-(16, 5, 'Aland Islands'),
-(17, 5, 'Albania'),
-(18, 5, 'Algeria'),
-(19, 5, 'American Samoa'),
-(20, 5, 'Andorra'),
-(21, 5, 'Angola'),
-(22, 5, 'Anguilla'),
-(23, 5, 'Antarctica'),
-(24, 5, 'Antigua and Barbuda'),
-(25, 5, 'Argentina'),
-(26, 5, 'Armenia'),
-(27, 5, 'Aruba'),
-(28, 5, 'Australia'),
-(29, 5, 'Austria'),
-(30, 5, 'Azerbaijan'),
-(31, 5, 'Bahamas'),
-(32, 5, 'Bahrain'),
-(33, 5, 'Bangladesh'),
-(34, 5, 'Barbados'),
-(35, 5, 'Belarus'),
-(36, 5, 'Belgium'),
-(37, 5, 'Belize'),
-(38, 5, 'Benin'),
-(39, 5, 'Bermuda'),
-(40, 5, 'Bhutan'),
-(41, 5, 'Bolivia, Plurinational State of'),
-(42, 5, 'Bosnia and Herzegovina'),
-(43, 5, 'Botswana'),
-(44, 5, 'Bouvet Island'),
-(45, 5, 'Brazil'),
-(46, 5, 'British Indian Ocean Territory'),
-(47, 5, 'Brunei Darussalam'),
-(48, 5, 'Bulgaria'),
-(49, 5, 'Burkina Faso'),
-(50, 5, 'Burundi'),
-(51, 5, 'Cambodia'),
-(52, 5, 'Cameroon'),
-(53, 5, 'Canada'),
-(54, 5, 'Cape Verde'),
-(55, 5, 'Cayman Islands'),
-(56, 5, 'Central African Republic'),
-(57, 5, 'Chad'),
-(58, 5, 'Chile'),
-(59, 5, 'China'),
-(60, 5, 'Christmas Island'),
-(61, 5, 'Cocos (Keeling) Islands'),
-(62, 5, 'Colombia'),
-(63, 5, 'Comoros'),
-(64, 5, 'Congo'),
-(65, 5, 'Congo, the Democratic Republic of the'),
-(66, 5, 'Cook Islands'),
-(67, 5, 'Costa Rica'),
-(68, 5, 'Cote d\'Ivoire'),
-(69, 5, 'Croatia'),
-(70, 5, 'Cuba'),
-(71, 5, 'Cyprus'),
-(72, 5, 'Czech Republic'),
-(73, 5, 'Denmark'),
-(74, 5, 'Djibouti'),
-(75, 5, 'Dominica'),
-(76, 5, 'Dominican Republic'),
-(77, 5, 'Ecuador'),
-(78, 5, 'Egypt'),
-(79, 5, 'El Salvador'),
-(80, 5, 'Equatorial Guinea'),
-(81, 5, 'Eritrea'),
-(82, 5, 'Estonia'),
-(83, 5, 'Ethiopia'),
-(84, 5, 'Falkland Islands (Malvinas)'),
-(85, 5, 'Faroe Islands'),
-(86, 5, 'Fiji'),
-(87, 5, 'Finland'),
-(88, 5, 'France'),
-(89, 5, 'French Guiana'),
-(90, 5, 'French Polynesia'),
-(91, 5, 'French Southern Territories'),
-(92, 5, 'Gabon'),
-(93, 5, 'Gambia'),
-(94, 5, 'Georgia'),
-(95, 5, 'Germany'),
-(96, 5, 'Ghana'),
-(97, 5, 'Gibraltar'),
-(98, 5, 'Greece'),
-(99, 5, 'Greenland'),
-(100, 5, 'Grenada'),
-(101, 5, 'Guadeloupe'),
-(102, 5, 'Guam'),
-(103, 5, 'Guatemala'),
-(104, 5, 'Guernsey'),
-(105, 5, 'Guinea'),
-(106, 5, 'Guinea-Bissau'),
-(107, 5, 'Guyana'),
-(108, 5, 'Haiti'),
-(109, 5, 'Heard Island and McDonald Islands'),
-(110, 5, 'Holy See (Vatican City State)'),
-(111, 5, 'Honduras'),
-(112, 5, 'Hong Kong'),
-(113, 5, 'Hungary'),
-(114, 5, 'Iceland'),
-(115, 5, 'India'),
-(116, 5, 'Indonesia'),
-(117, 5, 'Iran, Islamic Republic of'),
-(118, 5, 'Iraq'),
-(119, 5, 'Ireland'),
-(120, 5, 'Isle of Man'),
-(121, 5, 'Israel'),
-(122, 5, 'Italy'),
-(123, 5, 'Jamaica'),
-(124, 5, 'Japan'),
-(125, 5, 'Jersey'),
-(126, 5, 'Jordan'),
-(127, 5, 'Kazakhstan'),
-(128, 5, 'Kenya'),
-(129, 5, 'Kiribati'),
-(130, 5, 'Korea, Democratic People\'\'s Republic of'),
-(131, 5, 'Korea, Republic of'),
-(132, 5, 'Kuwait'),
-(133, 5, 'Kyrgyzstan'),
-(134, 5, 'Lao People\'s Democratic Republic'),
-(135, 5, 'Latvia'),
-(136, 5, 'Lebanon'),
-(137, 5, 'Lesotho'),
-(138, 5, 'Liberia'),
-(139, 5, 'Libyan Arab Jamahiriya'),
-(140, 5, 'Liechtenstein'),
-(141, 5, 'Lithuania'),
-(142, 5, 'Luxembourg'),
-(143, 5, 'Macao'),
-(144, 5, 'Macedonia, the former Yugoslav Republic of'),
-(145, 5, 'Madagascar'),
-(146, 5, 'Malawi'),
-(147, 5, 'Malaysia'),
-(148, 5, 'Maldives'),
-(149, 5, 'Mali'),
-(150, 5, 'Malta'),
-(151, 5, 'Marshall Islands'),
-(152, 5, 'Martinique'),
-(153, 5, 'Mauritania'),
-(154, 5, 'Mauritius'),
-(155, 5, 'Mayotte'),
-(156, 5, 'Mexico'),
-(157, 5, 'Micronesia, Federated States of'),
-(158, 5, 'Moldova, Republic of'),
-(159, 5, 'Monaco'),
-(160, 5, 'Mongolia'),
-(161, 5, 'Montenegro'),
-(162, 5, 'Montserrat'),
-(163, 5, 'Morocco'),
-(164, 5, 'Mozambique'),
-(165, 5, 'Myanmar'),
-(166, 5, 'Namibia'),
-(167, 5, 'Nauru'),
-(168, 5, 'Nepal'),
-(169, 5, 'Netherlands'),
-(170, 5, 'Netherlands Antilles'),
-(171, 5, 'New Caledonia'),
-(172, 5, 'New Zealand'),
-(173, 5, 'Nicaragua'),
-(174, 5, 'Niger'),
-(175, 5, 'Nigeria'),
-(176, 5, 'Niue'),
-(177, 5, 'Norfolk Island'),
-(178, 5, 'Northern Mariana Islands'),
-(179, 5, 'Norway'),
-(180, 5, 'Oman'),
-(181, 5, 'Pakistan'),
-(182, 5, 'Palau'),
-(183, 5, 'Palestinian Territory, Occupied'),
-(184, 5, 'Panama'),
-(185, 5, 'Papua New Guinea'),
-(186, 5, 'Paraguay'),
-(187, 5, 'Peru'),
-(188, 5, 'Philippines'),
-(189, 5, 'Pitcairn'),
-(190, 5, 'Poland'),
-(191, 5, 'Portugal'),
-(192, 5, 'Puerto Rico'),
-(193, 5, 'Qatar'),
-(194, 5, 'Reunion ﻿ Réunion'),
-(195, 5, 'Romania'),
-(196, 5, 'Russian Federation'),
-(197, 5, 'Rwanda'),
-(198, 5, 'Saint Barthélemy'),
-(199, 5, 'Saint Helena'),
-(200, 5, 'Saint Kitts and Nevis'),
-(201, 5, 'Saint Lucia'),
-(202, 5, 'Saint Martin (French part)'),
-(203, 5, 'Saint Pierre and Miquelon'),
-(204, 5, 'Saint Vincent and the Grenadines'),
-(205, 5, 'Samoa'),
-(206, 5, 'San Marino'),
-(207, 5, 'Sao Tome and Principe'),
-(208, 5, 'Saudi Arabia'),
-(209, 5, 'Senegal'),
-(210, 5, 'Serbia'),
-(211, 5, 'Seychelles'),
-(212, 5, 'Sierra Leone'),
-(213, 5, 'Singapore'),
-(214, 5, 'Slovakia'),
-(215, 5, 'Slovenia'),
-(216, 5, 'Solomon Islands'),
-(217, 5, 'Somalia'),
-(218, 5, 'South Africa'),
-(219, 5, 'South Georgia and the South Sandwich Islands'),
-(220, 5, 'Spain'),
-(221, 5, 'Sri Lanka'),
-(222, 5, 'Sudan'),
-(223, 5, 'Suriname'),
-(224, 5, 'Svalbard and Jan Mayen'),
-(225, 5, 'Swaziland'),
-(226, 5, 'Sweden'),
-(227, 5, 'Switzerland'),
-(228, 5, 'Syrian Arab Republic'),
-(229, 5, 'Taiwan, Province of China'),
-(230, 5, 'Tajikistan'),
-(231, 5, 'Tanzania, United Republic of'),
-(232, 5, 'Thailand'),
-(233, 5, 'Timor-Leste'),
-(234, 5, 'Togo'),
-(235, 5, 'Tokelau'),
-(236, 5, 'Tonga'),
-(237, 5, 'Trinidad and Tobago'),
-(238, 5, 'Tunisia'),
-(239, 5, 'Turkey'),
-(240, 5, 'Turkmenistan'),
-(241, 5, 'Turks and Caicos Islands'),
-(242, 5, 'Tuvalu'),
-(243, 5, 'Uganda'),
-(244, 5, 'Ukraine'),
-(245, 5, 'United Arab Emirates'),
-(246, 5, 'United Kingdom'),
-(247, 5, 'United States'),
-(248, 5, 'United States Minor Outlying Islands'),
-(249, 5, 'Uruguay'),
-(250, 5, 'Uzbekistan'),
-(251, 5, 'Vanuatu'),
-(252, 5, 'Venezuela, Bolivarian Republic of'),
-(253, 5, 'Viet Nam'),
-(254, 5, 'Virgin Islands, British'),
-(255, 5, 'Virgin Islands, U.S.'),
-(256, 5, 'Wallis and Futuna'),
-(257, 5, 'Western Sahara'),
-(258, 5, 'Yemen'),
-(259, 5, 'Zambia'),
-(260, 5, 'Zimbabwe'),
-(261, 6, 'No'),
-(262, 6, 'Unknown'),
-(263, 6, 'Yes-not on ART'),
-(264, 6, 'Yes-on ART'),
-(265, 7, 'CPAP/NIV mask'),
-(266, 7, 'HF nasal cannula'),
-(267, 7, 'Mask'),
-(268, 7, 'Mask with reservoir'),
-(269, 7, 'Unknown'),
-(270, 8, '>15 L/min'),
-(271, 8, '1-5 L/min'),
-(272, 8, '11-15 L/min'),
-(273, 8, '6-10 L/min'),
-(274, 8, 'Unknown'),
-(275, 9, 'Death'),
-(276, 9, 'Discharged alive'),
-(277, 9, 'Hospitalized'),
-(278, 9, 'Palliative discharge'),
-(279, 9, 'Transfer to other facility'),
-(280, 9, 'Unknown'),
-(281, 10, 'Oxygen therapy'),
-(282, 10, 'Room air'),
-(283, 10, 'Unknown'),
-(284, 13, 'Female'),
-(285, 13, 'Male'),
-(286, 13, 'Not Specified'),
-(287, 14, 'Concentrator'),
-(288, 14, 'Cylinder'),
-(289, 14, 'Piped'),
-(290, 14, 'Unknown'),
-(291, 11, 'Not done'),
-(292, 12, 'Better'),
-(293, 12, 'Same as before illness'),
-(294, 12, 'Unknown'),
-(295, 12, 'Worse'),
-(296, 15, 'No'),
-(297, 15, 'Unknown'),
-(298, 15, 'Yes'),
-(299, 16, 'N/A'),
-(300, 16, 'No'),
-(301, 16, 'Unknown'),
-(302, 16, 'Yes'),
-(303, 11, 'Negative'),
-(304, 11, 'Positive'),
-(305, 1, 'Azithromycin'),
-(306, 1, 'Chloroquine/hydroxychloroquine'),
-(307, 1, 'Favipiravir');
+INSERT INTO `tb_listofvalues` (`listTypeID`, `description`) VALUES
+(1, 'Interferon alpha'),
+(1, 'Interferon beta'),
+(1, 'Lopinavir/Ritonavir'),
+(1, 'Neuraminidase inhibitor'),
+(1, 'Ribavirin'),
+(2, 'Alert'),
+(2, 'Pain'),
+(2, 'Unresponsive'),
+(2, 'Verbal'),
+(3, 'MERS-CoV'),
+(3, 'SARS-CoV-2'),
+(4, 'Inhaled'),
+(4, 'Intravenous'),
+(4, 'Oral'),
+(5, 'Afghanistan'),
+(5, 'Aland Islands'),
+(5, 'Albania'),
+(5, 'Algeria'),
+(5, 'American Samoa'),
+(5, 'Andorra'),
+(5, 'Angola'),
+(5, 'Anguilla'),
+(5, 'Antarctica'),
+(5, 'Antigua and Barbuda'),
+(5, 'Argentina'),
+(5, 'Armenia'),
+(5, 'Aruba'),
+(5, 'Australia'),
+(5, 'Austria'),
+(5, 'Azerbaijan'),
+(5, 'Bahamas'),
+(5, 'Bahrain'),
+(5, 'Bangladesh'),
+(5, 'Barbados'),
+(5, 'Belarus'),
+(5, 'Belgium'),
+(5, 'Belize'),
+(5, 'Benin'),
+(5, 'Bermuda'),
+(5, 'Bhutan'),
+(5, 'Bolivia, Plurinational State of'),
+(5, 'Bosnia and Herzegovina'),
+(5, 'Botswana'),
+(5, 'Bouvet Island'),
+(5, 'Brazil'),
+(5, 'British Indian Ocean Territory'),
+(5, 'Brunei Darussalam'),
+(5, 'Bulgaria'),
+(5, 'Burkina Faso'),
+(5, 'Burundi'),
+(5, 'Cambodia'),
+(5, 'Cameroon'),
+(5, 'Canada'),
+(5, 'Cape Verde'),
+(5, 'Cayman Islands'),
+(5, 'Central African Republic'),
+(5, 'Chad'),
+(5, 'Chile'),
+(5, 'China'),
+(5, 'Christmas Island'),
+(5, 'Cocos (Keeling) Islands'),
+(5, 'Colombia'),
+(5, 'Comoros'),
+(5, 'Congo'),
+(5, 'Congo, the Democratic Republic of the'),
+(5, 'Cook Islands'),
+(5, 'Costa Rica'),
+(5, 'Cote d`Ivoire'),
+(5, 'Croatia'),
+(5, 'Cuba'),
+(5, 'Cyprus'),
+(5, 'Czech Republic'),
+(5, 'Denmark'),
+(5, 'Djibouti'),
+(5, 'Dominica'),
+(5, 'Dominican Republic'),
+(5, 'Ecuador'),
+(5, 'Egypt'),
+(5, 'El Salvador'),
+(5, 'Equatorial Guinea'),
+(5, 'Eritrea'),
+(5, 'Estonia'),
+(5, 'Ethiopia'),
+(5, 'Falkland Islands (Malvinas)'),
+(5, 'Faroe Islands'),
+(5, 'Fiji'),
+(5, 'Finland'),
+(5, 'France'),
+(5, 'French Guiana'),
+(5, 'French Polynesia'),
+(5, 'French Southern Territories'),
+(5, 'Gabon'),
+(5, 'Gambia'),
+(5, 'Georgia'),
+(5, 'Germany'),
+(5, 'Ghana'),
+(5, 'Gibraltar'),
+(5, 'Greece'),
+(5, 'Greenland'),
+(5, 'Grenada'),
+(5, 'Guadeloupe'),
+(5, 'Guam'),
+(5, 'Guatemala'),
+(5, 'Guernsey'),
+(5, 'Guinea'),
+(5, 'Guinea-Bissau'),
+(5, 'Guyana'),
+(5, 'Haiti'),
+(5, 'Heard Island and McDonald Islands'),
+(5, 'Holy See (Vatican City State)'),
+(5, 'Honduras'),
+(5, 'Hong Kong'),
+(5, 'Hungary'),
+(5, 'Iceland'),
+(5, 'India'),
+(5, 'Indonesia'),
+(5, 'Iran, Islamic Republic of'),
+(5, 'Iraq'),
+(5, 'Ireland'),
+(5, 'Isle of Man'),
+(5, 'Israel'),
+(5, 'Italy'),
+(5, 'Jamaica'),
+(5, 'Japan'),
+(5, 'Jersey'),
+(5, 'Jordan'),
+(5, 'Kazakhstan'),
+(5, 'Kenya'),
+(5, 'Kiribati'),
+(5, 'Korea, Democratic People``s Republic of'),
+(5, 'Korea, Republic of'),
+(5, 'Kuwait'),
+(5, 'Kyrgyzstan'),
+(5, 'Lao People`s Democratic Republic'),
+(5, 'Latvia'),
+(5, 'Lebanon'),
+(5, 'Lesotho'),
+(5, 'Liberia'),
+(5, 'Libyan Arab Jamahiriya'),
+(5, 'Liechtenstein'),
+(5, 'Lithuania'),
+(5, 'Luxembourg'),
+(5, 'Macao'),
+(5, 'Macedonia, the former Yugoslav Republic of'),
+(5, 'Madagascar'),
+(5, 'Malawi'),
+(5, 'Malaysia'),
+(5, 'Maldives'),
+(5, 'Mali'),
+(5, 'Malta'),
+(5, 'Marshall Islands'),
+(5, 'Martinique'),
+(5, 'Mauritania'),
+(5, 'Mauritius'),
+(5, 'Mayotte'),
+(5, 'Mexico'),
+(5, 'Micronesia, Federated States of'),
+(5, 'Moldova, Republic of'),
+(5, 'Monaco'),
+(5, 'Mongolia'),
+(5, 'Montenegro'),
+(5, 'Montserrat'),
+(5, 'Morocco'),
+(5, 'Mozambique'),
+(5, 'Myanmar'),
+(5, 'Namibia'),
+(5, 'Nauru'),
+(5, 'Nepal'),
+(5, 'Netherlands'),
+(5, 'Netherlands Antilles'),
+(5, 'New Caledonia'),
+(5, 'New Zealand'),
+(5, 'Nicaragua'),
+(5, 'Niger'),
+(5, 'Nigeria'),
+(5, 'Niue'),
+(5, 'Norfolk Island'),
+(5, 'Northern Mariana Islands'),
+(5, 'Norway'),
+(5, 'Oman'),
+(5, 'Pakistan'),
+(5, 'Palau'),
+(5, 'Palestinian Territory, Occupied'),
+(5, 'Panama'),
+(5, 'Papua New Guinea'),
+(5, 'Paraguay'),
+(5, 'Peru'),
+(5, 'Philippines'),
+(5, 'Pitcairn'),
+(5, 'Poland'),
+(5, 'Portugal'),
+(5, 'Puerto Rico'),
+(5, 'Qatar'),
+(5, 'Reunion ﻿ Réunion'),
+(5, 'Romania'),
+(5, 'Russian Federation'),
+(5, 'Rwanda'),
+(5, 'Saint Barthélemy'),
+(5, 'Saint Helena'),
+(5, 'Saint Kitts and Nevis'),
+(5, 'Saint Lucia'),
+(5, 'Saint Martin (French part)'),
+(5, 'Saint Pierre and Miquelon'),
+(5, 'Saint Vincent and the Grenadines'),
+(5, 'Samoa'),
+(5, 'San Marino'),
+(5, 'Sao Tome and Principe'),
+(5, 'Saudi Arabia'),
+(5, 'Senegal'),
+(5, 'Serbia'),
+(5, 'Seychelles'),
+(5, 'Sierra Leone'),
+(5, 'Singapore'),
+(5, 'Slovakia'),
+(5, 'Slovenia'),
+(5, 'Solomon Islands'),
+(5, 'Somalia'),
+(5, 'South Africa'),
+(5, 'South Georgia and the South Sandwich Islands'),
+(5, 'Spain'),
+(5, 'Sri Lanka'),
+(5, 'Sudan'),
+(5, 'Suriname'),
+(5, 'Svalbard and Jan Mayen'),
+(5, 'Swaziland'),
+(5, 'Sweden'),
+(5, 'Switzerland'),
+(5, 'Syrian Arab Republic'),
+(5, 'Taiwan, Province of China'),
+(5, 'Tajikistan'),
+(5, 'Tanzania, United Republic of'),
+(5, 'Thailand'),
+(5, 'Timor-Leste'),
+(5, 'Togo'),
+(5, 'Tokelau'),
+(5, 'Tonga'),
+(5, 'Trinidad and Tobago'),
+(5, 'Tunisia'),
+(5, 'Turkey'),
+(5, 'Turkmenistan'),
+(5, 'Turks and Caicos Islands'),
+(5, 'Tuvalu'),
+(5, 'Uganda'),
+(5, 'Ukraine'),
+(5, 'United Arab Emirates'),
+(5, 'United Kingdom'),
+(5, 'United States'),
+(5, 'United States Minor Outlying Islands'),
+(5, 'Uruguay'),
+(5, 'Uzbekistan'),
+(5, 'Vanuatu'),
+(5, 'Venezuela, Bolivarian Republic of'),
+(5, 'Viet Nam'),
+(5, 'Virgin Islands, British'),
+(5, 'Virgin Islands, U.S.'),
+(5, 'Wallis and Futuna'),
+(5, 'Western Sahara'),
+(5, 'Yemen'),
+(5, 'Zambia'),
+(5, 'Zimbabwe'),
+(6, 'No'),
+(6, 'Unknown'),
+(6, 'Yes-not on ART'),
+(6, 'Yes-on ART'),
+(7, 'CPAP/NIV mask'),
+(7, 'HF nasal cannula'),
+(7, 'Mask'),
+(7, 'Mask with reservoir'),
+(7, 'Unknown'),
+(8, '>15 L/min'),
+(8, '1-5 L/min'),
+(8, '11-15 L/min'),
+(8, '6-10 L/min'),
+(8, 'Unknown'),
+(9, 'Death'),
+(9, 'Discharged alive'),
+(9, 'Hospitalized'),
+(9, 'Palliative discharge'),
+(9, 'Transfer to other facility'),
+(9, 'Unknown'),
+(10, 'Oxygen therapy'),
+(10, 'Room air'),
+(10, 'Unknown'),
+(13, 'Female'),
+(13, 'Male'),
+(13, 'Not Specified'),
+(14, 'Concentrator'),
+(14, 'Cylinder'),
+(14, 'Piped'),
+(14, 'Unknown'),
+(11, 'Not done'),
+(12, 'Better'),
+(12, 'Same as before illness'),
+(12, 'Unknown'),
+(12, 'Worse'),
+(15, 'No'),
+(15, 'Unknown'),
+(15, 'Yes'),
+(16, 'N/A'),
+(16, 'No'),
+(16, 'Unknown'),
+(16, 'Yes'),
+(11, 'Negative'),
+(11, 'Positive'),
+(1, 'Azithromycin'),
+(1, 'Chloroquine/hydroxychloroquine'),
+(1, 'Favipiravir');
 
 -- --------------------------------------------------------
 
 --
 -- Estrutura para tabela `tb_listtype`
 --
-
 DROP TABLE IF EXISTS `tb_listtype`;
 CREATE TABLE `tb_listtype` (
-  `listTypeID` int(10) NOT NULL,
-  `description` varchar(255) NOT NULL COMMENT '(pt-br) Descrição.\r\n(en) description.'
+  `listTypeID` int(10) NOT NULL AUTO_INCREMENT,
+  `description` varchar(255) NOT NULL COMMENT '(pt-br) Descrição.\r\n(en) description.',
+  PRIMARY KEY (`listTypeID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Tabela truncada antes do insert `tb_listtype`
 --
-
 TRUNCATE TABLE `tb_listtype`;
---
--- Despejando dados para a tabela `tb_listtype`
---
-
-INSERT INTO `tb_listtype` (`listTypeID`, `description`) VALUES
-(1, 'Antiviral list'),
-(2, 'AVPU list'),
-(3, 'Coronavirus list'),
-(4, 'Corticosteroid list'),
-(5, 'Country list'),
-(6, 'HIV list'),
-(7, 'Interface list'),
-(8, 'O2 flow list'),
-(9, 'Outcome list'),
-(10, 'Outcome saturation list'),
-(11, 'pnnotdone_list'),
-(12, 'self_care_list'),
-(13, 'sex at birth list'),
-(14, 'Source of oxygen list'),
-(15, 'ynu_list'),
-(16, 'ynun_list');
+INSERT INTO `tb_listtype` (`description`) VALUES
+('Antiviral list'),
+('AVPU list'),
+('Coronavirus list'),
+('Corticosteroid list'),
+('Country list'),
+('HIV list'),
+('Interface list'),
+('O2 flow list'),
+('Outcome list'),
+('Outcome saturation list'),
+('pnnotdone_list'),
+('self_care_list'),
+('sex at birth list'),
+('Source of oxygen list'),
+('ynu_list'),
+('ynun_list');
 
 -- --------------------------------------------------------
 
 --
 -- Estrutura para tabela `tb_multilanguage`
 --
-
 DROP TABLE IF EXISTS `tb_multilanguage`;
 CREATE TABLE `tb_multilanguage` (
   `languageID` int(11) NOT NULL,
   `description` varchar(300) NOT NULL,
-  `descriptionLang` varchar(500) NOT NULL
+  `descriptionLang` varchar(500) NOT NULL,
+  PRIMARY KEY (`languageID`,`description`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 --
 -- Tabela truncada antes do insert `tb_multilanguage`
 --
-
 TRUNCATE TABLE `tb_multilanguage`;
---
--- Despejando dados para a tabela `tb_multilanguage`
---
-
 INSERT INTO `tb_multilanguage` (`languageID`, `description`, `descriptionLang`) VALUES
 (1, '>15 L/min', '> 15 L/min'),
 (1, '1-5 L/min', '1-5 L/min'),
@@ -784,7 +706,7 @@ INSERT INTO `tb_multilanguage` (`languageID`, `description`, `descriptionLang`) 
 (1, 'Corticosteroid', 'Corticosteroide'),
 (1, 'Corticosteroid list', 'Lista Corticosteroid'),
 (1, 'Costa Rica', 'Costa Rica'),
-(1, 'Cote d\'Ivoire', 'Cote d\'Ivoire'),
+(1, 'Cote d`Ivoire', 'Cote d`Ivoire'),
 (1, 'Cough', 'Tosse'),
 (1, 'Cough with haemoptysis', 'Tosse com hemóptise'),
 (1, 'Cough with sputum', 'Tosse com expectoração'),
@@ -928,7 +850,7 @@ INSERT INTO `tb_multilanguage` (`languageID`, `description`, `descriptionLang`) 
 (1, 'Kazakhstan', 'Kazakhstan'),
 (1, 'Kenya', 'Kenya'),
 (1, 'Kiribati', 'Kiribati'),
-(1, 'Korea, Democratic People\'s Republic of', 'Korea, Democratic People\'s Republic of'),
+(1, 'Korea, Democratic People`s Republic of', 'Korea, Democratic People`s Republic of'),
 (1, 'Korea, Republic of', 'Korea, Republic of'),
 (1, 'Kuwait', 'Kuwait'),
 (1, 'Kyrgyzstan', 'Kyrgyzstan'),
@@ -936,7 +858,7 @@ INSERT INTO `tb_multilanguage` (`languageID`, `description`, `descriptionLang`) 
 (1, 'Laboratory results', 'Resultados laboratoriais'),
 (1, 'Laboratory Worker', 'Profissional de Laboratório'),
 (1, 'Lactate measurement', 'Lactose'),
-(1, 'Lao People\'s Democratic Republic', 'Lao People\'s Democratic Republic'),
+(1, 'Lao People`s Democratic Republic', 'Lao People`s Democratic Republic'),
 (1, 'Latvia', 'Latvia'),
 (1, 'LDH measurement', 'LDH'),
 (1, 'Lebanon', 'Lebanon'),
@@ -944,7 +866,7 @@ INSERT INTO `tb_multilanguage` (`languageID`, `description`, `descriptionLang`) 
 (1, 'Liberia', 'Liberia'),
 (1, 'Libyan Arab Jamahiriya', 'Libyan Arab Jamahiriya'),
 (1, 'Liechtenstein', 'Liechtenstein'),
-(1, 'List of instances of the answers for the \'Sex at Birth\' question. In the WHO CRF, the three possible answers are: male, female or not specified.', 'Lista de instâncias das possíveis respostas para a pergunta \'Sexo as nascer\'. No FRC da OMS as três possíveis respostas são: masculino, feminino ou não especificado.'),
+(1, 'List of instances of the answers for the `Sex at Birth` question. In the WHO CRF, the three possible answers are: male, female or not specified.', 'Lista de instâncias das possíveis respostas para a pergunta `Sexo as nascer`. No FRC da OMS as três possíveis respostas são: masculino, feminino ou não especificado.'),
 (1, 'List question', 'Questão com respostas em lista padronizada'),
 (1, 'Lithuania', 'Lithuania'),
 (1, 'Liver dysfunction', 'Disfunção hepática'),
@@ -1144,7 +1066,7 @@ INSERT INTO `tb_multilanguage` (`languageID`, `description`, `descriptionLang`) 
 (1, 'The number of breaths (inhalation and exhalation) taken per minute time.', 'O número de respirações medidos a cada minuto.'),
 (1, 'The number of heartbeats measured per minute time.', 'O número de batimentos cardíacos medidos a cada minuto.'),
 (1, 'The Person that is the case subject of the WHO CRF.', 'A Pessoa que é o objeto do caso relatado pelo FRC da OMS.'),
-(1, 'This class represents the Rapid version of the World Health Organisation\'s (WHO) Case Record Form (CRF) for the COVID-19 outbreak.', 'Esta classe representa a versão Rapid do Formulário de Relato de Caso (FRC) para a epidemia COVID-19, criada pela Organização Mundial de Saúde.'),
+(1, 'This class represents the Rapid version of the World Health Organisation`s (WHO) Case Record Form (CRF) for the COVID-19 outbreak.', 'Esta classe representa a versão Rapid do Formulário de Relato de Caso (FRC) para a epidemia COVID-19, criada pela Organização Mundial de Saúde.'),
 (1, 'time in weeks', 'tempo em semanas'),
 (1, 'Timor-Leste', 'Timor-Leste'),
 (1, 'Togo', 'Togo'),
@@ -1229,7 +1151,6 @@ INSERT INTO `tb_multilanguage` (`languageID`, `description`, `descriptionLang`) 
 --
 -- Estrutura para tabela `tb_notificationrecord`
 --
-
 DROP TABLE IF EXISTS `tb_notificationrecord`;
 CREATE TABLE `tb_notificationrecord` (
   `userID` int(11) NOT NULL,
@@ -1239,110 +1160,92 @@ CREATE TABLE `tb_notificationrecord` (
   `rowdID` int(11) NOT NULL,
   `changedOn` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `operation` varchar(1) NOT NULL,
-  `log` text
+  `log` text,
+  PRIMARY KEY (`userID`, `profileID`, `hospitalUnitID`, `tableName`, `rowdID`, `changedOn`, `operation`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 --
--- Tabela truncada antes do insert `tb_notificationrecord`
+-- Tabela truncada `tb_notificationrecord`
 --
-
 TRUNCATE TABLE `tb_notificationrecord`;
--- --------------------------------------------------------
 
 --
 -- Estrutura para tabela `tb_participant`
 --
-
 DROP TABLE IF EXISTS `tb_participant`;
 CREATE TABLE `tb_participant` (
-  `participantID` int(10) NOT NULL,
-  `medicalRecord` varchar(500) DEFAULT NULL COMMENT '(pt-br) prontuário do paciente. \r\n(en) patient medical record.'
+  `participantID` int(10) NOT NULL AUTO_INCREMENT,
+  `medicalRecord` varchar(500) DEFAULT NULL COMMENT '(pt-br) prontuário do paciente. \r\n(en) patient medical record.',
+  PRIMARY KEY (`participantID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='(pt-br) Tabela para registros de pacientes.\r\n(en) Table for patient records.';
 
 --
 -- Tabela truncada antes do insert `tb_participant`
 --
-
 TRUNCATE TABLE `tb_participant`;
---
--- Despejando dados para a tabela `tb_participant`
---
-
-INSERT INTO `tb_participant` (`participantID`, `medicalRecord`) VALUES
-(1, '50135'),
-(2, '53105');
+INSERT INTO `tb_participant` (`medicalRecord`) VALUES
+('50135'),
+('53105');
 
 -- --------------------------------------------------------
 
 --
 -- Estrutura para tabela `tb_permission`
 --
-
 DROP TABLE IF EXISTS `tb_permission`;
 CREATE TABLE `tb_permission` (
-  `permissionID` bigint(20) UNSIGNED NOT NULL,
-  `description` varchar(255) NOT NULL
+  `permissionID` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `description` varchar(255) NOT NULL,
+  PRIMARY KEY (`permissionID`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 --
 -- Tabela truncada antes do insert `tb_permission`
 --
-
 TRUNCATE TABLE `tb_permission`;
---
--- Despejando dados para a tabela `tb_permission`
---
-
-INSERT INTO `tb_permission` (`permissionID`, `description`) VALUES
-(1, 'Insert'),
-(2, 'Update'),
-(3, 'Delete'),
-(4, 'ALL');
-
+INSERT INTO `tb_permission` (`description`) VALUES
+('Insert'),
+('Update'),
+('Delete'),
+('ALL');
 -- --------------------------------------------------------
 
 --
 -- Estrutura para tabela `tb_questiongroup`
 --
-
 DROP TABLE IF EXISTS `tb_questiongroup`;
 CREATE TABLE `tb_questiongroup` (
-  `questionGroupID` int(10) NOT NULL,
+  `questionGroupID` int(10) NOT NULL AUTO_INCREMENT,
   `description` varchar(255) NOT NULL COMMENT '(pt-br) Descrição.\r\n(en) description.',
-  `comment` varchar(255) DEFAULT NULL
+  `comment` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`questionGroupID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Relacionado ao Question Group da ontologia relaciona as diversas sessoes existentes nos formularios do CRF COVID-19';
 
 --
 -- Tabela truncada antes do insert `tb_questiongroup`
 --
-
 TRUNCATE TABLE `tb_questiongroup`;
---
--- Despejando dados para a tabela `tb_questiongroup`
---
-
-INSERT INTO `tb_questiongroup` (`questionGroupID`, `description`, `comment`) VALUES
-(1, 'Clinical inclusion criteria', ''),
-(2, 'Co-morbidities', 'Existing conditions prior to admission.'),
-(3, 'Complications', ''),
-(4, 'Daily clinical features', ''),
-(5, 'Date of onset and admission vital signs', 'first available data at presentation/admission'),
-(6, 'Demographics', ''),
-(7, 'Diagnostic/pathogen testing', ''),
-(8, 'Laboratory results', ''),
-(9, 'Medication', 'Is the patient CURRENTLY receiving any of the following?'),
-(10, 'Outcome', ''),
-(11, 'Pre-admission & chronic medication', 'Were any of the following taken within 14 days of admission?'),
-(12, 'Signs and symptoms on admission', ''),
-(13, 'Supportive care', 'Is the patient CURRENTLY receiving any of the following?'),
-(14, 'Vital signs', '');
+INSERT INTO `tb_questiongroup` (`description`, `comment`) VALUES
+('Clinical inclusion criteria', ''),
+('Co-morbidities', 'Existing conditions prior to admission.'),
+('Complications', ''),
+('Daily clinical features', ''),
+('Date of onset and admission vital signs', 'first available data at presentation/admission'),
+('Demographics', ''),
+('Diagnostic/pathogen testing', ''),
+('Laboratory results', ''),
+('Medication', 'Is the patient CURRENTLY receiving any of the following?'),
+('Outcome', ''),
+('Pre-admission & chronic medication', 'Were any of the following taken within 14 days of admission?'),
+('Signs and symptoms on admission', ''),
+('Supportive care', 'Is the patient CURRENTLY receiving any of the following?'),
+('Vital signs', '');
 
 -- --------------------------------------------------------
 
 --
 -- Estrutura para tabela `tb_questiongroupform`
 --
-
 DROP TABLE IF EXISTS `tb_questiongroupform`;
 CREATE TABLE `tb_questiongroupform` (
   `crfFormsID` int(10) NOT NULL,
@@ -1353,12 +1256,7 @@ CREATE TABLE `tb_questiongroupform` (
 --
 -- Tabela truncada antes do insert `tb_questiongroupform`
 --
-
 TRUNCATE TABLE `tb_questiongroupform`;
---
--- Despejando dados para a tabela `tb_questiongroupform`
---
-
 INSERT INTO `tb_questiongroupform` (`crfFormsID`, `questionID`, `questionOrder`) VALUES
 (1, 29, 10629),
 (1, 33, 10710),
@@ -1669,43 +1567,37 @@ INSERT INTO `tb_questiongroupform` (`crfFormsID`, `questionID`, `questionOrder`)
 --
 -- Estrutura para tabela `tb_questiongroupformrecord`
 --
-
 DROP TABLE IF EXISTS `tb_questiongroupformrecord`;
 CREATE TABLE `tb_questiongroupformrecord` (
-  `questionGroupFormRecordID` int(10) NOT NULL,
+  `questionGroupFormRecordID` int(10) NOT NULL AUTO_INCREMENT,
   `formRecordID` int(10) NOT NULL,
   `crfFormsID` int(10) NOT NULL,
   `questionID` int(10) NOT NULL,
   `listOfValuesID` int(10) DEFAULT NULL,
-  `answer` varchar(512) DEFAULT NULL
+  `answer` varchar(512) DEFAULT NULL,
+  PRIMARY KEY (`questionGroupFormRecordID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='(pt-br) Tabela para registro da resposta associada a uma questão de um agrupamento de um formulário referente a um questionario de avaliação.\r\n(en) Form record table.';
 
 --
 -- Tabela truncada antes do insert `tb_questiongroupformrecord`
 --
-
 TRUNCATE TABLE `tb_questiongroupformrecord`;
 -- --------------------------------------------------------
 
 --
 -- Estrutura para tabela `tb_questionnaire`
 --
-
 DROP TABLE IF EXISTS `tb_questionnaire`;
 CREATE TABLE `tb_questionnaire` (
   `questionnaireID` int(10) NOT NULL,
-  `description` varchar(255) NOT NULL
+  `description` varchar(255) NOT NULL,
+  PRIMARY KEY (`questionnaireID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Tabela truncada antes do insert `tb_questionnaire`
 --
-
 TRUNCATE TABLE `tb_questionnaire`;
---
--- Despejando dados para a tabela `tb_questionnaire`
---
-
 INSERT INTO `tb_questionnaire` (`questionnaireID`, `description`) VALUES
 (1, 'WHO COVID-19 Rapid Version CRF');
 
@@ -1717,13 +1609,14 @@ INSERT INTO `tb_questionnaire` (`questionnaireID`, `description`) VALUES
 
 DROP TABLE IF EXISTS `tb_questions`;
 CREATE TABLE `tb_questions` (
-  `questionID` int(10) NOT NULL,
+  `questionID` int(10) NOT NULL AUTO_INCREMENT,
   `description` varchar(255) NOT NULL COMMENT '(pt-br) Descrição.\r\n(en) description.',
   `questionTypeID` int(10) NOT NULL COMMENT '(pt-br) Chave estrangeira para tabela tb_QuestionsTypes.\r\n(en) Foreign key for the tp_QuestionsTypes table.',
   `listTypeID` int(10) DEFAULT NULL,
   `questionGroupID` int(10) DEFAULT NULL,
   `subordinateTo` int(10) DEFAULT NULL,
-  `isAbout` int(10) DEFAULT NULL
+  `isAbout` int(10) DEFAULT NULL,
+  PRIMARY KEY (`questionID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
@@ -1731,520 +1624,494 @@ CREATE TABLE `tb_questions` (
 --
 
 TRUNCATE TABLE `tb_questions`;
---
--- Despejando dados para a tabela `tb_questions`
---
-
-INSERT INTO `tb_questions` (`questionID`, `description`, `questionTypeID`, `listTypeID`, `questionGroupID`, `subordinateTo`, `isAbout`) VALUES
-(1, 'Age', 5, NULL, 6, NULL, NULL),
-(2, 'Altered consciousness/confusion', 8, 15, NULL, NULL, NULL),
-(3, 'Angiotensin converting enzyme inhibitors (ACE inhibitors)', 8, 15, NULL, NULL, NULL),
-(4, 'Angiotensin II receptor blockers (ARBs)', 8, 15, NULL, NULL, NULL),
-(5, 'AVPU scale', 4, 2, NULL, NULL, NULL),
-(6, 'BP (diastolic)', 5, NULL, NULL, NULL, NULL),
-(7, 'BP (systolic)', 5, NULL, NULL, NULL, NULL),
-(8, 'Chest pain', 8, 15, NULL, NULL, NULL),
-(9, 'Conjunctivitis', 8, 15, NULL, NULL, NULL),
-(10, 'Cough', 8, 15, NULL, NULL, NULL),
-(11, 'Cough with sputum', 8, 15, NULL, NULL, NULL),
-(12, 'Diarrhoea', 8, 15, NULL, NULL, NULL),
-(13, 'Glasgow Coma Score (GCS /15)', 5, NULL, NULL, NULL, NULL),
-(14, 'Heart rate', 5, NULL, NULL, NULL, NULL),
-(15, 'Muscle aches (myalgia)', 8, 15, NULL, NULL, NULL),
-(16, 'Non-steroidal anti-inflammatory (NSAID)', 8, 15, NULL, NULL, NULL),
-(17, 'Other signs or symptoms', 8, 15, NULL, NULL, NULL),
-(18, 'Oxygen saturation', 5, NULL, NULL, NULL, NULL),
-(19, 'Respiratory rate', 5, NULL, NULL, NULL, NULL),
-(20, 'Seizures', 8, 15, NULL, NULL, NULL),
-(21, 'Severe dehydration', 8, 15, NULL, NULL, NULL),
-(22, 'Shortness of breath', 8, 15, NULL, NULL, NULL),
-(23, 'Sore throat', 8, 15, NULL, NULL, NULL),
-(24, 'Sternal capillary refill time >2seconds', 8, 15, NULL, NULL, NULL),
-(25, 'Temperature', 5, NULL, NULL, NULL, NULL),
-(26, 'Vomiting/Nausea', 8, 15, NULL, NULL, NULL),
-(27, 'Which sign or symptom', 7, NULL, NULL, NULL, NULL),
-(28, 'Other signs or symptoms', 8, 15, 4, NULL, 17),
-(29, 'Other signs or symptoms', 8, 15, 12, NULL, 17),
-(30, 'Other complication', 8, 15, 3, NULL, NULL),
-(31, 'Chest X-Ray /CT performed', 8, 15, 7, NULL, NULL),
-(32, 'Was pathogen testing done during this illness episode', 8, 15, 7, NULL, NULL),
-(33, 'Antifungal agent', 8, 15, 9, NULL, NULL),
-(34, 'Antimalarial agent', 8, 15, 9, NULL, NULL),
-(35, 'Antiviral', 8, 15, 9, NULL, NULL),
-(36, 'Corticosteroid', 8, 15, 9, NULL, NULL),
-(37, 'Experimental agent', 8, 15, 9, NULL, NULL),
-(38, 'Bleeding (Haemorrhage)', 8, 15, 12, NULL, NULL),
-(39, 'Oxygen therapy', 8, 15, 13, NULL, NULL),
-(40, 'Oxygen saturation', 5, NULL, 5, NULL, 18),
-(41, 'Oxygen saturation', 5, NULL, 14, NULL, 18),
-(42, 'Other respiratory pathogen', 6, 11, 7, 32, NULL),
-(43, 'Viral haemorrhagic fever', 6, 11, 7, 32, NULL),
-(44, 'Coronavirus', 6, 11, 7, 32, NULL),
-(45, 'Which coronavirus', 4, 3, 7, 44, NULL),
-(46, 'Influenza virus', 6, 11, 7, 32, NULL),
-(47, 'A history of self-reported feverishness or measured fever of ≥ 38 degrees Celsius', 1, NULL, 1, NULL, NULL),
-(48, 'Clinical suspicion of ARI despite not meeting criteria above', 1, NULL, 1, NULL, NULL),
-(49, 'Proven or suspected infection with pathogen of Public Health Interest', 1, NULL, 1, NULL, NULL),
-(50, 'Ashtma', 8, 15, 2, NULL, NULL),
-(51, 'Asplenia', 8, 15, 2, NULL, NULL),
-(52, 'Chronic cardiac disease (not hypertension)', 8, 15, 2, NULL, NULL),
-(53, 'Chronic kidney disease', 8, 15, 2, NULL, NULL),
-(54, 'Chronic liver disease', 8, 15, 2, NULL, NULL),
-(55, 'Chronic neurological disorder', 8, 15, 2, NULL, NULL),
-(56, 'Chronic pulmonary disease', 8, 15, 2, NULL, NULL),
-(57, 'Current smoking', 8, 15, 2, NULL, NULL),
-(58, 'Diabetes', 8, 15, 2, NULL, NULL),
-(59, 'HIV', 4, 6, 2, NULL, NULL),
-(60, 'Hypertension', 8, 15, 2, NULL, NULL),
-(61, 'Malignant neoplasm', 8, 15, 2, NULL, NULL),
-(62, 'Other co-morbidities', 8, 15, 2, NULL, NULL),
-(63, 'Dyspnoea (shortness of breath) OR Tachypnoea', 1, NULL, 1, NULL, NULL),
-(64, 'Cough', 1, NULL, 1, NULL, NULL),
-(65, 'Tuberculosis', 8, 15, 2, NULL, NULL),
-(66, 'Acute renal injury', 8, 15, 3, NULL, NULL),
-(67, 'Acute Respiratory Distress Syndrome', 8, 15, 3, NULL, NULL),
-(68, 'Anaemia', 8, 15, 3, NULL, NULL),
-(69, 'Bacteraemia', 8, 15, 3, NULL, NULL),
-(70, 'Bleeding', 8, 15, 3, NULL, NULL),
-(71, 'Bronchiolitis', 8, 15, 3, NULL, NULL),
-(72, 'Cardiac arrest', 8, 15, 3, NULL, NULL),
-(73, 'Cardiac arrhythmia', 8, 15, 3, NULL, NULL),
-(74, 'Cardiomyopathy', 8, 15, 3, NULL, NULL),
-(75, 'Endocarditis', 8, 15, 3, NULL, NULL),
-(76, 'Liver dysfunction', 8, 15, 3, NULL, NULL),
-(77, 'Meningitis/Encephalitis', 8, 15, 3, NULL, NULL),
-(78, 'Myocarditis/Pericarditis', 8, 15, 3, NULL, NULL),
-(79, 'Pancreatitis', 8, 15, 3, NULL, NULL),
-(80, 'Pneumonia', 8, 15, 3, NULL, NULL),
-(81, 'Shock', 8, 15, 3, NULL, NULL),
-(82, 'Which corticosteroid route', 4, 4, 9, 36, NULL),
-(83, 'Confusion', 8, 15, 4, NULL, NULL),
-(84, 'Falciparum malaria', 6, 11, 7, 32, NULL),
-(85, 'HIV', 6, 11, 7, 32, NULL),
-(86, 'Infiltrates present', 8, 15, 7, 31, NULL),
-(87, 'Maximum daily corticosteroid dose', 7, NULL, 9, 36, NULL),
-(88, 'Non-Falciparum malaria', 6, 11, 7, 32, NULL),
-(89, 'O2 flow', 4, 8, 13, 39, NULL),
-(90, 'Oxygen interface', 4, 7, 13, 39, NULL),
-(91, 'Site name', 7, NULL, 12, 38, NULL),
-(92, 'Source of oxygen', 4, 14, 13, 39, NULL),
-(93, 'Admission date at this facility', 2, NULL, 5, NULL, NULL),
-(94, 'Height', 5, NULL, 5, NULL, NULL),
-(95, 'Malnutrition', 8, 15, 5, NULL, NULL),
-(96, 'Mid-upper arm circumference', 5, NULL, 5, NULL, NULL),
-(97, 'Symptom onset (date of first/earliest symptom)', 2, NULL, 5, NULL, NULL),
-(98, 'Weight', 5, NULL, 5, NULL, NULL),
-(99, 'Which antifungal agent', 7, NULL, 9, 33, NULL),
-(100, 'Which antimalarial agent', 7, NULL, 9, 34, NULL),
-(101, 'Which antiviral', 4, 1, 9, 35, NULL),
-(102, 'Which complication', 7, NULL, 3, 30, NULL),
-(103, 'Which experimental agent', 7, NULL, 9, 37, NULL),
-(104, 'Which other antiviral', 7, NULL, 9, 35, NULL),
-(105, 'Which other pathogen of public health interest detected', 7, NULL, 7, 32, NULL),
-(106, 'Other corona virus', 7, NULL, 7, 44, NULL),
-(107, 'Date of Birth', 2, NULL, 6, NULL, NULL),
-(108, 'Healthcare worker', 8, 15, 6, NULL, NULL),
-(109, 'Laboratory Worker', 8, 15, 6, NULL, NULL),
-(110, 'Pregnant', 9, 16, 6, NULL, NULL),
-(111, 'Sex at Birth', 4, 13, 6, NULL, NULL),
-(112, 'Oxygen saturation expl', 4, 10, 14, 41, NULL),
-(113, 'Gestational weeks assessment', 5, NULL, 6, 110, NULL),
-(114, 'ALT/SGPT measurement', 3, NULL, 8, NULL, NULL),
-(115, 'APTT/APTR measurement', 3, NULL, 8, NULL, NULL),
-(116, 'AST/SGOT measurement', 3, NULL, 8, NULL, NULL),
-(117, 'Antibiotic', 8, 15, 9, NULL, NULL),
-(118, 'ESR measurement', 3, NULL, 8, NULL, NULL),
-(119, 'Intravenous fluids', 8, 15, 9, NULL, NULL),
-(120, 'Oral/orogastric fluids', 8, 15, 9, NULL, NULL),
-(121, 'Influenza virus type', 7, NULL, 7, 46, NULL),
-(122, 'Ability to self-care at discharge versus before illness', 4, 12, 10, NULL, NULL),
-(123, 'Outcome', 4, 9, 10, NULL, NULL),
-(124, 'Outcome date', 2, NULL, 10, NULL, NULL),
-(125, 'Which respiratory pathogen', 7, NULL, 7, 42, NULL),
-(126, 'Which virus', 7, NULL, 7, 43, NULL),
-(127, 'Abdominal pain', 8, 15, 12, NULL, NULL),
-(128, 'Cough with haemoptysis', 8, 15, 12, NULL, NULL),
-(129, 'Fatigue/Malaise', 8, 15, 12, NULL, NULL),
-(130, 'Headache', 8, 15, 12, NULL, NULL),
-(131, 'duration in weeks', 5, NULL, NULL, NULL, NULL),
-(132, 'History of fever', 8, 15, 12, NULL, NULL),
-(133, 'Inability to walk', 8, 15, 12, NULL, NULL),
-(134, 'Joint pain (arthralgia)', 8, 15, 12, NULL, NULL),
-(135, 'Lower chest wall indrawing', 8, 15, 12, NULL, NULL),
-(136, 'Lymphadenopathy', 8, 15, 12, NULL, NULL),
-(137, 'Runny nose (rhinorrhoea)', 8, 15, 12, NULL, NULL),
-(138, 'Skin rash', 8, 15, 12, NULL, NULL),
-(139, 'Skin ulcers', 8, 15, 12, NULL, NULL),
-(140, 'Wheezing', 8, 15, 12, NULL, NULL),
-(141, 'Oxygen saturation expl', 4, 10, 5, 40, NULL),
-(142, 'Which sign or symptom', 7, NULL, 4, 28, 27),
-(143, 'Which sign or symptom', 7, NULL, 12, 29, 27),
-(144, 'Age (years)', 5, NULL, 6, NULL, 1),
-(145, 'Creatine kinase measurement', 3, NULL, 8, NULL, NULL),
-(146, 'Creatinine measurement', 3, NULL, 8, NULL, NULL),
-(147, 'CRP measurement', 3, NULL, 8, NULL, NULL),
-(148, 'D-dimer measurement', 3, NULL, 8, NULL, NULL),
-(149, 'Extracorporeal (ECMO) support', 8, 15, 13, NULL, NULL),
-(150, 'ICU or High Dependency Unit admission', 8, 15, 13, NULL, NULL),
-(151, 'Inotropes/vasopressors', 8, 15, 13, NULL, NULL),
-(152, 'Invasive ventilation', 8, 15, 13, NULL, NULL),
-(153, 'Non-invasive ventilation', 9, 16, 13, NULL, NULL),
-(154, 'Prone position', 8, 15, 13, NULL, NULL),
-(155, 'Renal replacement therapy (RRT) or dialysis', 8, 15, 13, NULL, NULL),
-(156, 'Ferritin measurement', 3, NULL, 8, NULL, NULL),
-(157, 'Haematocrit measurement', 3, NULL, 8, NULL, NULL),
-(158, 'Haemoglobin measurement', 3, NULL, 8, NULL, NULL),
-(159, 'IL-6 measurement', 3, NULL, 8, NULL, NULL),
-(160, 'INR measurement', 3, NULL, 8, NULL, NULL),
-(161, 'Lactate measurement', 3, NULL, 8, NULL, NULL),
-(162, 'LDH measurement', 3, NULL, 8, NULL, NULL),
-(163, 'Platelets measurement', 3, NULL, 8, NULL, NULL),
-(164, 'Potassium measurement', 3, NULL, 8, NULL, NULL),
-(165, 'Procalcitonin measurement', 3, NULL, 8, NULL, NULL),
-(166, 'Country', 4, 5, NULL, NULL, NULL),
-(167, 'Date of enrolment', 2, NULL, NULL, NULL, NULL),
-(168, 'Date of follow up', 2, NULL, NULL, NULL, NULL),
-(169, 'PT measurement', 3, NULL, 8, NULL, NULL),
-(170, 'Sodium measurement', 3, NULL, 8, NULL, NULL),
-(171, 'Total bilirubin measurement', 3, NULL, 8, NULL, NULL),
-(172, 'Troponin measurement', 3, NULL, 8, NULL, NULL),
-(173, 'duration in days', 5, NULL, NULL, NULL, NULL),
-(174, 'Urea (BUN) measurement', 3, NULL, 8, NULL, NULL),
-(175, 'specific response', 7, NULL, NULL, NULL, NULL),
-(176, 'Seizures', 8, 15, 3, NULL, 20),
-(177, 'Chest pain', 8, 15, 4, NULL, 8),
-(178, 'Seizures', 8, 15, 4, NULL, 20),
-(179, 'Altered consciousness/confusion', 8, 15, 4, NULL, 2),
-(180, 'Which NSAID', 7, NULL, 9, 16, NULL),
-(181, 'Oxygen saturation expl', 4, 10, NULL, NULL, NULL),
-(182, 'Vomiting/Nausea', 8, 15, 4, NULL, 26),
-(183, 'Cough', 8, 15, 4, NULL, 10),
-(184, 'Sore throat', 8, 15, 4, NULL, 23),
-(185, 'Shortness of breath', 8, 15, 4, NULL, 22),
-(186, 'Diarrhoea', 8, 15, 4, NULL, 12),
-(187, 'Muscle aches (myalgia)', 8, 15, 4, NULL, 15),
-(188, 'Conjunctivitis', 8, 15, 4, NULL, 9),
-(189, 'Severe dehydration', 8, 15, 5, NULL, 21),
-(190, 'AVPU scale', 4, 2, 5, NULL, 5),
-(191, 'Heart rate', 5, NULL, 5, NULL, 14),
-(192, 'BP (diastolic)', 5, NULL, 5, NULL, 6),
-(193, 'Glasgow Coma Score (GCS /15)', 5, NULL, 5, NULL, 13),
-(194, 'Respiratory rate', 5, NULL, 5, NULL, 19),
-(195, 'BP (systolic)', 5, NULL, 5, NULL, 7),
-(196, 'Sternal capillary refill time >2seconds', 8, 15, 5, NULL, 24),
-(197, 'Cough with sputum production', 8, 15, 4, NULL, 11),
-(198, 'Temperature', 5, NULL, 5, NULL, 25),
-(199, 'Non-steroidal anti-inflammatory (NSAID)', 8, 15, 9, NULL, 16),
-(200, 'Angiotensin converting enzyme inhibitors (ACE inhibitors)', 8, 15, 9, NULL, 3),
-(201, 'Angiotensin II receptor blockers (ARBs)', 8, 15, 9, NULL, 4),
-(202, 'Angiotensin converting enzyme inhibitors (ACE inhibitors)', 8, 15, 11, NULL, 3),
-(203, 'Angiotensin II receptor blockers (ARBs)', 8, 15, 11, NULL, 4),
-(204, 'Non-steroidal anti-inflammatory (NSAID)', 8, 15, 11, NULL, 16),
-(205, 'Shortness of breath', 8, 15, 12, NULL, 22),
-(206, 'Vomiting/Nausea', 8, 15, 12, NULL, 26),
-(207, 'Altered consciousness/confusion', 8, 15, 12, NULL, 2),
-(208, 'Diarrhoea', 8, 15, 12, NULL, 12),
-(209, 'Muscle aches (myalgia)', 8, 15, 12, NULL, 15),
-(210, 'Cough', 8, 15, 12, NULL, 10),
-(211, 'Seizures', 8, 15, 12, NULL, 20),
-(212, 'Age (months)', 5, NULL, 6, NULL, 1),
-(213, 'Conjunctivitis', 8, 15, 12, NULL, 9),
-(214, 'Chest pain', 8, 15, 12, NULL, 8),
-(215, 'Sore throat', 8, 15, 12, NULL, 23),
-(216, 'AVPU scale', 4, 2, 14, NULL, 5),
-(217, 'Temperature', 5, NULL, 14, NULL, 25),
-(218, 'Sternal capillary refill time >2seconds', 8, 15, 14, NULL, 24),
-(219, 'BP (diastolic)', 5, NULL, 14, NULL, 6),
-(220, 'Severe dehydration', 8, 15, 14, NULL, 21),
-(221, 'Heart rate', 5, NULL, 14, NULL, 14),
-(222, 'BP (systolic)', 5, NULL, 14, NULL, 7),
-(223, 'Glasgow Coma Score (GCS /15)', 5, NULL, 14, NULL, 13),
-(224, 'Respiratory rate', 5, NULL, 14, NULL, 19),
-(225, 'Cough with sputum production', 8, 15, 12, NULL, 11),
-(226, 'WBC count measurement', 3, NULL, 8, NULL, NULL),
-(227, 'Which other co-morbidities', 7, NULL, 2, 62, NULL),
-(228, 'Date of ICU/HDU admission', 2, NULL, 13, 150, NULL),
-(229, 'ICU/HDU discharge date', 2, NULL, 13, 150, NULL),
-(230, 'Date of ICU/HDU admission', 2, NULL, 13, 150, NULL),
-(231, 'ICU/HDU discharge date', 2, NULL, 13, 150, NULL),
-(232, 'Which antibiotic', 7, NULL, 9, 117, NULL),
-(233, 'Total duration ICU/HCU', 5, NULL, 13, 150, 173),
-(234, 'Total duration Oxygen Therapy', 5, NULL, 13, 39, 173),
-(235, 'Total duration Non-invasive ventilation', 5, NULL, 13, 153, 173),
-(236, 'Total duration Invasive ventilation', 5, NULL, 13, 152, 173),
-(237, 'Total duration ECMO', 5, NULL, 13, 149, 173),
-(238, 'Total duration Prone position', 5, NULL, 13, 154, 173),
-(239, 'Total duration RRT or dyalysis', 5, NULL, 13, 155, 173),
-(240, 'Total duration Inotropes/vasopressors', 5, NULL, 13, 151, 173),
-(241, 'Systemic anticoagulation', 8, 15, 9, NULL, NULL),
-(242, 'Facility name', 7, NULL, NULL, NULL, NULL),
-(243, 'Loss of smell', 8, 15, NULL, NULL, NULL),
-(244, 'Loss of taste', 8, 15, NULL, NULL, NULL),
-(245, 'FiO2 value', 10, NULL, 13, 152, NULL),
-(246, 'PaO2 value', 10, NULL, 13, 152, NULL),
-(247, 'PaCO2 value', 10, NULL, 13, 152, NULL),
-(248, 'Plateau pressure value', 10, NULL, 13, 152, NULL),
-(249, 'PEEP value', 10, NULL, 13, 152, NULL),
-(250, 'Loss of smell daily', 8, 15, 4, NULL, 243),
-(251, 'Loss of taste daily', 8, 15, 4, NULL, 244),
-(252, 'Loss of smell signs', 8, 15, 12, NULL, 243),
-(253, 'Loss of taste signs', 8, 15, 12, NULL, 244),
-(254, 'Which antiviral', 4, 1, 11, NULL, 101),
-(255, 'Which other antiviral', 7, NULL, 11, 254, 104);
+INSERT INTO `tb_questions` (`description`, `questionTypeID`, `listTypeID`, `questionGroupID`, `subordinateTo`, `isAbout`) VALUES
+('Age', 5, NULL, 6, NULL, NULL),
+('Altered consciousness/confusion', 8, 15, NULL, NULL, NULL),
+('Angiotensin converting enzyme inhibitors (ACE inhibitors)', 8, 15, NULL, NULL, NULL),
+('Angiotensin II receptor blockers (ARBs)', 8, 15, NULL, NULL, NULL),
+('AVPU scale', 4, 2, NULL, NULL, NULL),
+('BP (diastolic)', 5, NULL, NULL, NULL, NULL),
+('BP (systolic)', 5, NULL, NULL, NULL, NULL),
+('Chest pain', 8, 15, NULL, NULL, NULL),
+('Conjunctivitis', 8, 15, NULL, NULL, NULL),
+('Cough', 8, 15, NULL, NULL, NULL),
+('Cough with sputum', 8, 15, NULL, NULL, NULL),
+('Diarrhoea', 8, 15, NULL, NULL, NULL),
+('Glasgow Coma Score (GCS /15)', 5, NULL, NULL, NULL, NULL),
+('Heart rate', 5, NULL, NULL, NULL, NULL),
+('Muscle aches (myalgia)', 8, 15, NULL, NULL, NULL),
+('Non-steroidal anti-inflammatory (NSAID)', 8, 15, NULL, NULL, NULL),
+('Other signs or symptoms', 8, 15, NULL, NULL, NULL),
+('Oxygen saturation', 5, NULL, NULL, NULL, NULL),
+('Respiratory rate', 5, NULL, NULL, NULL, NULL),
+('Seizures', 8, 15, NULL, NULL, NULL),
+('Severe dehydration', 8, 15, NULL, NULL, NULL),
+('Shortness of breath', 8, 15, NULL, NULL, NULL),
+('Sore throat', 8, 15, NULL, NULL, NULL),
+('Sternal capillary refill time >2seconds', 8, 15, NULL, NULL, NULL),
+('Temperature', 5, NULL, NULL, NULL, NULL),
+('Vomiting/Nausea', 8, 15, NULL, NULL, NULL),
+('Which sign or symptom', 7, NULL, NULL, NULL, NULL),
+('Other signs or symptoms', 8, 15, 4, NULL, 17),
+('Other signs or symptoms', 8, 15, 12, NULL, 17),
+('Other complication', 8, 15, 3, NULL, NULL),
+('Chest X-Ray /CT performed', 8, 15, 7, NULL, NULL),
+('Was pathogen testing done during this illness episode', 8, 15, 7, NULL, NULL),
+('Antifungal agent', 8, 15, 9, NULL, NULL),
+('Antimalarial agent', 8, 15, 9, NULL, NULL),
+('Antiviral', 8, 15, 9, NULL, NULL),
+('Corticosteroid', 8, 15, 9, NULL, NULL),
+('Experimental agent', 8, 15, 9, NULL, NULL),
+('Bleeding (Haemorrhage)', 8, 15, 12, NULL, NULL),
+('Oxygen therapy', 8, 15, 13, NULL, NULL),
+('Oxygen saturation', 5, NULL, 5, NULL, 18),
+('Oxygen saturation', 5, NULL, 14, NULL, 18),
+('Other respiratory pathogen', 6, 11, 7, 32, NULL),
+('Viral haemorrhagic fever', 6, 11, 7, 32, NULL),
+('Coronavirus', 6, 11, 7, 32, NULL),
+('Which coronavirus', 4, 3, 7, 44, NULL),
+('Influenza virus', 6, 11, 7, 32, NULL),
+('A history of self-reported feverishness or measured fever of ≥ 38 degrees Celsius', 1, NULL, 1, NULL, NULL),
+('Clinical suspicion of ARI despite not meeting criteria above', 1, NULL, 1, NULL, NULL),
+('Proven or suspected infection with pathogen of Public Health Interest', 1, NULL, 1, NULL, NULL),
+('Ashtma', 8, 15, 2, NULL, NULL),
+('Asplenia', 8, 15, 2, NULL, NULL),
+('Chronic cardiac disease (not hypertension)', 8, 15, 2, NULL, NULL),
+('Chronic kidney disease', 8, 15, 2, NULL, NULL),
+('Chronic liver disease', 8, 15, 2, NULL, NULL),
+('Chronic neurological disorder', 8, 15, 2, NULL, NULL),
+('Chronic pulmonary disease', 8, 15, 2, NULL, NULL),
+('Current smoking', 8, 15, 2, NULL, NULL),
+('Diabetes', 8, 15, 2, NULL, NULL),
+('HIV', 4, 6, 2, NULL, NULL),
+('Hypertension', 8, 15, 2, NULL, NULL),
+('Malignant neoplasm', 8, 15, 2, NULL, NULL),
+('Other co-morbidities', 8, 15, 2, NULL, NULL),
+('Dyspnoea (shortness of breath) OR Tachypnoea', 1, NULL, 1, NULL, NULL),
+('Cough', 1, NULL, 1, NULL, NULL),
+('Tuberculosis', 8, 15, 2, NULL, NULL),
+('Acute renal injury', 8, 15, 3, NULL, NULL),
+('Acute Respiratory Distress Syndrome', 8, 15, 3, NULL, NULL),
+('Anaemia', 8, 15, 3, NULL, NULL),
+('Bacteraemia', 8, 15, 3, NULL, NULL),
+('Bleeding', 8, 15, 3, NULL, NULL),
+('Bronchiolitis', 8, 15, 3, NULL, NULL),
+('Cardiac arrest', 8, 15, 3, NULL, NULL),
+('Cardiac arrhythmia', 8, 15, 3, NULL, NULL),
+('Cardiomyopathy', 8, 15, 3, NULL, NULL),
+('Endocarditis', 8, 15, 3, NULL, NULL),
+('Liver dysfunction', 8, 15, 3, NULL, NULL),
+('Meningitis/Encephalitis', 8, 15, 3, NULL, NULL),
+('Myocarditis/Pericarditis', 8, 15, 3, NULL, NULL),
+('Pancreatitis', 8, 15, 3, NULL, NULL),
+('Pneumonia', 8, 15, 3, NULL, NULL),
+('Shock', 8, 15, 3, NULL, NULL),
+('Which corticosteroid route', 4, 4, 9, 36, NULL),
+('Confusion', 8, 15, 4, NULL, NULL),
+('Falciparum malaria', 6, 11, 7, 32, NULL),
+('HIV', 6, 11, 7, 32, NULL),
+('Infiltrates present', 8, 15, 7, 31, NULL),
+('Maximum daily corticosteroid dose', 7, NULL, 9, 36, NULL),
+('Non-Falciparum malaria', 6, 11, 7, 32, NULL),
+('O2 flow', 4, 8, 13, 39, NULL),
+('Oxygen interface', 4, 7, 13, 39, NULL),
+('Site name', 7, NULL, 12, 38, NULL),
+('Source of oxygen', 4, 14, 13, 39, NULL),
+('Admission date at this facility', 2, NULL, 5, NULL, NULL),
+('Height', 5, NULL, 5, NULL, NULL),
+('Malnutrition', 8, 15, 5, NULL, NULL),
+('Mid-upper arm circumference', 5, NULL, 5, NULL, NULL),
+('Symptom onset (date of first/earliest symptom)', 2, NULL, 5, NULL, NULL),
+('Weight', 5, NULL, 5, NULL, NULL),
+('Which antifungal agent', 7, NULL, 9, 33, NULL),
+('Which antimalarial agent', 7, NULL, 9, 34, NULL),
+('Which antiviral', 4, 1, 9, 35, NULL),
+('Which complication', 7, NULL, 3, 30, NULL),
+('Which experimental agent', 7, NULL, 9, 37, NULL),
+('Which other antiviral', 7, NULL, 9, 35, NULL),
+('Which other pathogen of public health interest detected', 7, NULL, 7, 32, NULL),
+('Other corona virus', 7, NULL, 7, 44, NULL),
+('Date of Birth', 2, NULL, 6, NULL, NULL),
+('Healthcare worker', 8, 15, 6, NULL, NULL),
+('Laboratory Worker', 8, 15, 6, NULL, NULL),
+('Pregnant', 9, 16, 6, NULL, NULL),
+('Sex at Birth', 4, 13, 6, NULL, NULL),
+('Oxygen saturation expl', 4, 10, 14, 41, NULL),
+('Gestational weeks assessment', 5, NULL, 6, 110, NULL),
+('ALT/SGPT measurement', 3, NULL, 8, NULL, NULL),
+('APTT/APTR measurement', 3, NULL, 8, NULL, NULL),
+('AST/SGOT measurement', 3, NULL, 8, NULL, NULL),
+('Antibiotic', 8, 15, 9, NULL, NULL),
+('ESR measurement', 3, NULL, 8, NULL, NULL),
+('Intravenous fluids', 8, 15, 9, NULL, NULL),
+('Oral/orogastric fluids', 8, 15, 9, NULL, NULL),
+('Influenza virus type', 7, NULL, 7, 46, NULL),
+('Ability to self-care at discharge versus before illness', 4, 12, 10, NULL, NULL),
+('Outcome', 4, 9, 10, NULL, NULL),
+('Outcome date', 2, NULL, 10, NULL, NULL),
+('Which respiratory pathogen', 7, NULL, 7, 42, NULL),
+('Which virus', 7, NULL, 7, 43, NULL),
+('Abdominal pain', 8, 15, 12, NULL, NULL),
+('Cough with haemoptysis', 8, 15, 12, NULL, NULL),
+('Fatigue/Malaise', 8, 15, 12, NULL, NULL),
+('Headache', 8, 15, 12, NULL, NULL),
+('duration in weeks', 5, NULL, NULL, NULL, NULL),
+('History of fever', 8, 15, 12, NULL, NULL),
+('Inability to walk', 8, 15, 12, NULL, NULL),
+('Joint pain (arthralgia)', 8, 15, 12, NULL, NULL),
+('Lower chest wall indrawing', 8, 15, 12, NULL, NULL),
+('Lymphadenopathy', 8, 15, 12, NULL, NULL),
+('Runny nose (rhinorrhoea)', 8, 15, 12, NULL, NULL),
+('Skin rash', 8, 15, 12, NULL, NULL),
+('Skin ulcers', 8, 15, 12, NULL, NULL),
+('Wheezing', 8, 15, 12, NULL, NULL),
+('Oxygen saturation expl', 4, 10, 5, 40, NULL),
+('Which sign or symptom', 7, NULL, 4, 28, 27),
+('Which sign or symptom', 7, NULL, 12, 29, 27),
+('Age (years)', 5, NULL, 6, NULL, 1),
+('Creatine kinase measurement', 3, NULL, 8, NULL, NULL),
+('Creatinine measurement', 3, NULL, 8, NULL, NULL),
+('CRP measurement', 3, NULL, 8, NULL, NULL),
+('D-dimer measurement', 3, NULL, 8, NULL, NULL),
+('Extracorporeal (ECMO) support', 8, 15, 13, NULL, NULL),
+('ICU or High Dependency Unit admission', 8, 15, 13, NULL, NULL),
+('Inotropes/vasopressors', 8, 15, 13, NULL, NULL),
+('Invasive ventilation', 8, 15, 13, NULL, NULL),
+('Non-invasive ventilation', 9, 16, 13, NULL, NULL),
+('Prone position', 8, 15, 13, NULL, NULL),
+('Renal replacement therapy (RRT) or dialysis', 8, 15, 13, NULL, NULL),
+('Ferritin measurement', 3, NULL, 8, NULL, NULL),
+('Haematocrit measurement', 3, NULL, 8, NULL, NULL),
+('Haemoglobin measurement', 3, NULL, 8, NULL, NULL),
+('IL-6 measurement', 3, NULL, 8, NULL, NULL),
+('INR measurement', 3, NULL, 8, NULL, NULL),
+('Lactate measurement', 3, NULL, 8, NULL, NULL),
+('LDH measurement', 3, NULL, 8, NULL, NULL),
+('Platelets measurement', 3, NULL, 8, NULL, NULL),
+('Potassium measurement', 3, NULL, 8, NULL, NULL),
+('Procalcitonin measurement', 3, NULL, 8, NULL, NULL),
+('Country', 4, 5, NULL, NULL, NULL),
+('Date of enrolment', 2, NULL, NULL, NULL, NULL),
+('Date of follow up', 2, NULL, NULL, NULL, NULL),
+('PT measurement', 3, NULL, 8, NULL, NULL),
+('Sodium measurement', 3, NULL, 8, NULL, NULL),
+('Total bilirubin measurement', 3, NULL, 8, NULL, NULL),
+('Troponin measurement', 3, NULL, 8, NULL, NULL),
+('duration in days', 5, NULL, NULL, NULL, NULL),
+('Urea (BUN) measurement', 3, NULL, 8, NULL, NULL),
+('specific response', 7, NULL, NULL, NULL, NULL),
+('Seizures', 8, 15, 3, NULL, 20),
+('Chest pain', 8, 15, 4, NULL, 8),
+('Seizures', 8, 15, 4, NULL, 20),
+('Altered consciousness/confusion', 8, 15, 4, NULL, 2),
+('Which NSAID', 7, NULL, 9, 16, NULL),
+('Oxygen saturation expl', 4, 10, NULL, NULL, NULL),
+('Vomiting/Nausea', 8, 15, 4, NULL, 26),
+('Cough', 8, 15, 4, NULL, 10),
+('Sore throat', 8, 15, 4, NULL, 23),
+('Shortness of breath', 8, 15, 4, NULL, 22),
+('Diarrhoea', 8, 15, 4, NULL, 12),
+('Muscle aches (myalgia)', 8, 15, 4, NULL, 15),
+('Conjunctivitis', 8, 15, 4, NULL, 9),
+('Severe dehydration', 8, 15, 5, NULL, 21),
+('AVPU scale', 4, 2, 5, NULL, 5),
+('Heart rate', 5, NULL, 5, NULL, 14),
+('BP (diastolic)', 5, NULL, 5, NULL, 6),
+('Glasgow Coma Score (GCS /15)', 5, NULL, 5, NULL, 13),
+('Respiratory rate', 5, NULL, 5, NULL, 19),
+('BP (systolic)', 5, NULL, 5, NULL, 7),
+('Sternal capillary refill time >2seconds', 8, 15, 5, NULL, 24),
+('Cough with sputum production', 8, 15, 4, NULL, 11),
+('Temperature', 5, NULL, 5, NULL, 25),
+('Non-steroidal anti-inflammatory (NSAID)', 8, 15, 9, NULL, 16),
+('Angiotensin converting enzyme inhibitors (ACE inhibitors)', 8, 15, 9, NULL, 3),
+('Angiotensin II receptor blockers (ARBs)', 8, 15, 9, NULL, 4),
+('Angiotensin converting enzyme inhibitors (ACE inhibitors)', 8, 15, 11, NULL, 3),
+('Angiotensin II receptor blockers (ARBs)', 8, 15, 11, NULL, 4),
+('Non-steroidal anti-inflammatory (NSAID)', 8, 15, 11, NULL, 16),
+('Shortness of breath', 8, 15, 12, NULL, 22),
+('Vomiting/Nausea', 8, 15, 12, NULL, 26),
+('Altered consciousness/confusion', 8, 15, 12, NULL, 2),
+('Diarrhoea', 8, 15, 12, NULL, 12),
+('Muscle aches (myalgia)', 8, 15, 12, NULL, 15),
+('Cough', 8, 15, 12, NULL, 10),
+('Seizures', 8, 15, 12, NULL, 20),
+('Age (months)', 5, NULL, 6, NULL, 1),
+('Conjunctivitis', 8, 15, 12, NULL, 9),
+('Chest pain', 8, 15, 12, NULL, 8),
+('Sore throat', 8, 15, 12, NULL, 23),
+('AVPU scale', 4, 2, 14, NULL, 5),
+('Temperature', 5, NULL, 14, NULL, 25),
+('Sternal capillary refill time >2seconds', 8, 15, 14, NULL, 24),
+('BP (diastolic)', 5, NULL, 14, NULL, 6),
+('Severe dehydration', 8, 15, 14, NULL, 21),
+('Heart rate', 5, NULL, 14, NULL, 14),
+('BP (systolic)', 5, NULL, 14, NULL, 7),
+('Glasgow Coma Score (GCS /15)', 5, NULL, 14, NULL, 13),
+('Respiratory rate', 5, NULL, 14, NULL, 19),
+('Cough with sputum production', 8, 15, 12, NULL, 11),
+('WBC count measurement', 3, NULL, 8, NULL, NULL),
+('Which other co-morbidities', 7, NULL, 2, 62, NULL),
+('Date of ICU/HDU admission', 2, NULL, 13, 150, NULL),
+('ICU/HDU discharge date', 2, NULL, 13, 150, NULL),
+('Date of ICU/HDU admission', 2, NULL, 13, 150, NULL),
+('ICU/HDU discharge date', 2, NULL, 13, 150, NULL),
+('Which antibiotic', 7, NULL, 9, 117, NULL),
+('Total duration ICU/HCU', 5, NULL, 13, 150, 173),
+('Total duration Oxygen Therapy', 5, NULL, 13, 39, 173),
+('Total duration Non-invasive ventilation', 5, NULL, 13, 153, 173),
+('Total duration Invasive ventilation', 5, NULL, 13, 152, 173),
+('Total duration ECMO', 5, NULL, 13, 149, 173),
+('Total duration Prone position', 5, NULL, 13, 154, 173),
+('Total duration RRT or dyalysis', 5, NULL, 13, 155, 173),
+('Total duration Inotropes/vasopressors', 5, NULL, 13, 151, 173),
+('Systemic anticoagulation', 8, 15, 9, NULL, NULL),
+('Facility name', 7, NULL, NULL, NULL, NULL),
+('Loss of smell', 8, 15, NULL, NULL, NULL),
+('Loss of taste', 8, 15, NULL, NULL, NULL),
+('FiO2 value', 10, NULL, 13, 152, NULL),
+('PaO2 value', 10, NULL, 13, 152, NULL),
+('PaCO2 value', 10, NULL, 13, 152, NULL),
+('Plateau pressure value', 10, NULL, 13, 152, NULL),
+('PEEP value', 10, NULL, 13, 152, NULL),
+('Loss of smell daily', 8, 15, 4, NULL, 243),
+('Loss of taste daily', 8, 15, 4, NULL, 244),
+('Loss of smell signs', 8, 15, 12, NULL, 243),
+('Loss of taste signs', 8, 15, 12, NULL, 244),
+('Which antiviral', 4, 1, 11, NULL, 101),
+('Which other antiviral', 7, NULL, 11, 254, 104);
 
 -- --------------------------------------------------------
 
 --
 -- Estrutura para tabela `tb_questiontype`
 --
-
 DROP TABLE IF EXISTS `tb_questiontype`;
 CREATE TABLE `tb_questiontype` (
-  `questionTypeID` int(10) NOT NULL,
-  `description` varchar(255) NOT NULL COMMENT '(pt-br) Descrição.\r\n(en) description.'
+  `questionTypeID` int(10) NOT NULL AUTO_INCREMENT,
+  `description` varchar(255) NOT NULL COMMENT '(pt-br) Descrição.\r\n(en) description.',
+  PRIMARY KEY (`questionTypeID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Tabela truncada antes do insert `tb_questiontype`
 --
-
 TRUNCATE TABLE `tb_questiontype`;
---
--- Despejando dados para a tabela `tb_questiontype`
---
-
-INSERT INTO `tb_questiontype` (`questionTypeID`, `description`) VALUES
-(1, 'Boolean_Question'),
-(2, 'Date question'),
-(3, 'Laboratory question'),
-(4, 'List question'),
-(5, 'Number question'),
-(6, 'PNNot_done_Question'),
-(7, 'Text_Question'),
-(8, 'YNU_Question'),
-(9, 'YNUN_Question'),
-(10, 'Ventilation question');
+INSERT INTO `tb_questiontype` (`description`) VALUES
+('Boolean_Question'),
+('Date question'),
+('Laboratory question'),
+('List question'),
+('Number question'),
+('PNNot_done_Question'),
+('Text_Question'),
+('YNU_Question'),
+('YNUN_Question'),
+('Ventilation question');
 
 -- --------------------------------------------------------
 
 --
 -- Estrutura para tabela `tb_user`
 --
-
 DROP TABLE IF EXISTS `tb_user`;
 CREATE TABLE `tb_user` (
-  `userID` bigint(20) UNSIGNED NOT NULL,
-  `login` varchar(255) NOT NULL,
+  `userID` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `login` varchar(255) UNIQUE NOT NULL,
   `firstName` varchar(100) NOT NULL,
   `lastName` varchar(100) NOT NULL,
   `regionalCouncilCode` varchar(255) DEFAULT NULL,
   `password` varchar(255) NOT NULL,
   `eMail` varchar(255) DEFAULT NULL,
-  `foneNumber` varchar(255) DEFAULT NULL
+  `foneNumber` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`userID`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 --
 -- Tabela truncada antes do insert `tb_user`
 --
-
 TRUNCATE TABLE `tb_user`;
---
--- Despejando dados para a tabela `tb_user`
---
-
-INSERT INTO `tb_user` (`userID`, `login`, `firstName`, `lastName`, `regionalCouncilCode`, `password`, `eMail`, `foneNumber`) VALUES
-(1, 'admin', 'Administrador', 'Teste', NULL, '$2a$12$yCNRVs6A1VwyUclQONkxyOxZC/8tOLUOHzt/JWquNHlak6fcOB7/m', NULL, NULL);
+INSERT INTO `tb_user` (`login`, `firstName`, `lastName`, `regionalCouncilCode`, `password`, `eMail`, `foneNumber`) VALUES
+('admin', 'Administrador', 'Teste', NULL, '$2a$12$yCNRVs6A1VwyUclQONkxyOxZC/8tOLUOHzt/JWquNHlak6fcOB7/m', NULL, NULL);
 
 -- --------------------------------------------------------
 
 --
 -- Estrutura para tabela `tb_userrole`
 --
-
 DROP TABLE IF EXISTS `tb_userrole`;
 CREATE TABLE `tb_userrole` (
   `userID` int(11) NOT NULL,
   `groupRoleID` int(11) NOT NULL,
   `hospitalUnitID` int(11) NOT NULL,
   `creationDate` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `expirationDate` timestamp NULL DEFAULT NULL
+  `expirationDate` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`userID`, `groupRoleID`, `hospitalUnitID`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 --
--- Tabela truncada antes do insert `tb_userrole`
+-- Tabela truncada `tb_userrole`
 --
-
 TRUNCATE TABLE `tb_userrole`;
---
--- Índices de tabelas apagadas
---
 
 --
 -- Índices de tabela `tb_assessmentquestionnaire`
 --
 ALTER TABLE `tb_assessmentquestionnaire`
-  ADD PRIMARY KEY (`participantID`,`hospitalUnitID`,`questionnaireID`),
-  ADD KEY `FKtb_Assessm665217` (`hospitalUnitID`),
-  ADD KEY `FKtb_Assessm419169` (`questionnaireID`);
+  ADD FOREIGN KEY (`participantID`) REFERENCES `tb_participant` (`participantID`),
+  ADD FOREIGN KEY (`hospitalUnitID`) REFERENCES `tb_hospitalunit` (`hospitalUnitID`),
+  ADD FOREIGN KEY (`questionnaireID`) REFERENCES `tb_questionnaire` (`questionnaireID`);
 
 --
 -- Índices de tabela `tb_crfforms`
 --
 ALTER TABLE `tb_crfforms`
-  ADD PRIMARY KEY (`crfFormsID`),
-  ADD KEY `FKtb_CRFForm860269` (`questionnaireID`);
+  ADD FOREIGN KEY (`questionnaireID`) REFERENCES `tb_questionnaire` (`questionnaireID`);
 
 --
 -- Índices de tabela `tb_formrecord`
 --
 ALTER TABLE `tb_formrecord`
-  ADD PRIMARY KEY (`formRecordID`),
-  ADD KEY `FKtb_FormRec2192` (`crfFormsID`),
-  ADD KEY `FKtb_FormRec984256` (`participantID`,`hospitalUnitID`,`questionnaireID`);
-
---
--- Índices de tabela `tb_grouprole`
---
-ALTER TABLE `tb_grouprole`
-  ADD PRIMARY KEY (`groupRoleID`),
-  ADD UNIQUE KEY `groupRoleID` (`groupRoleID`);
+  ADD FOREIGN KEY (`crfFormsID`) REFERENCES `tb_crfforms` (`crfFormsID`),
+  ADD FOREIGN KEY (`participantID`) REFERENCES `tb_participant` (`participantID`),
+  ADD FOREIGN KEY (`hospitalUnitID`) REFERENCES `tb_hospitalunit` (`hospitalUnitID`),
+  ADD FOREIGN KEY (`questionnaireID`) REFERENCES `tb_questionnaire` (`questionnaireID`);
 
 --
 -- Índices de tabela `tb_grouprolepermission`
 --
 ALTER TABLE `tb_grouprolepermission`
-  ADD PRIMARY KEY (`groupRoleID`,`permissionID`),
-  ADD KEY `FKtb_GroupRo893005` (`permissionID`);
-
---
--- Índices de tabela `tb_hospitalunit`
---
-ALTER TABLE `tb_hospitalunit`
-  ADD PRIMARY KEY (`hospitalUnitID`);
-
---
--- Índices de tabela `tb_language`
---
-ALTER TABLE `tb_language`
-  ADD PRIMARY KEY (`languageID`);
+  ADD FOREIGN KEY (`groupRoleID`) REFERENCES `tb_grouprole` (`groupRoleID`),
+  ADD FOREIGN KEY (`permissionID`) REFERENCES `tb_permission` (`permissionID`);
 
 --
 -- Índices de tabela `tb_listofvalues`
 --
 ALTER TABLE `tb_listofvalues`
-  ADD PRIMARY KEY (`listOfValuesID`),
-  ADD KEY `FKtb_ListOfV184108` (`listTypeID`);
-
---
--- Índices de tabela `tb_listtype`
---
-ALTER TABLE `tb_listtype`
-  ADD PRIMARY KEY (`listTypeID`);
+  ADD FOREIGN KEY (`listTypeID`) REFERENCES `tb_listtype` (`listTypeID`);
 
 --
 -- Índices de tabela `tb_multilanguage`
 --
 ALTER TABLE `tb_multilanguage`
-  ADD PRIMARY KEY (`languageID`,`description`);
+  ADD FOREIGN KEY (`languageID`) REFERENCES `tb_language` (`languageID`);
 
 --
--- Índices de tabela `tb_notificationrecord`
+-- Índices de tabela `tb_multilanguage`
 --
 ALTER TABLE `tb_notificationrecord`
-  ADD PRIMARY KEY (`userID`,`profileID`,`hospitalUnitID`,`tableName`,`rowdID`,`changedOn`,`operation`);
+  ADD FOREIGN KEY (`userID`) REFERENCES `tb_user` (`userID`),
+  ADD FOREIGN KEY (`profileID`) REFERENCES `tb_grouprole` (`groupRoleID`),
+  ADD FOREIGN KEY (`hospitalUnitID`) REFERENCES `tb_hospitalunit` (`hospitalUnitID`);
+
 
 --
--- Índices de tabela `tb_participant`
+-- Índices de tabela `tb_questiongroupformrecord`
 --
-ALTER TABLE `tb_participant`
-  ADD PRIMARY KEY (`participantID`);
+ALTER TABLE `tb_questiongroupformrecord`
+  ADD FOREIGN KEY (`formRecordID`) REFERENCES `tb_formrecord` (`formRecordID`),
+  ADD FOREIGN KEY (`crfFormsID`) REFERENCES `tb_crfforms` (`crfFormsID`),
+  ADD FOREIGN KEY (`questionID`) REFERENCES `tb_questions` (`questionID`),
+  ADD FOREIGN KEY (`listOfValuesID`) REFERENCES `tb_listofvalues` (`listOfValuesID`);
 
 --
--- Índices de tabela `tb_permission`
+-- Índices de tabela `tb_questions`
 --
-ALTER TABLE `tb_permission`
-  ADD PRIMARY KEY (`permissionID`),
-  ADD UNIQUE KEY `permissionID` (`permissionID`);
+ALTER TABLE `tb_questions`
+  ADD FOREIGN KEY (`questionTypeID`) REFERENCES `tb_questiontype` (`questionTypeID`),
+  ADD FOREIGN KEY (`listTypeID`) REFERENCES `tb_listtype` (`listTypeID`),
+  ADD FOREIGN KEY (`questionGroupID`) REFERENCES `tb_questiongroup` (`questionGroupID`),
+  ADD FOREIGN KEY (`subordinateTo`) REFERENCES `tb_questions` (`questionID`),
+  ADD FOREIGN KEY (`isAbout`) REFERENCES `tb_questions` (`questionID`);
 
 --
--- Índices de tabela `tb_user`
+-- Índices de tabela `tb_questiongroupform`
 --
-ALTER TABLE `tb_user`
-  ADD PRIMARY KEY (`userID`),
-  ADD UNIQUE KEY `userID` (`userID`),
-  ADD UNIQUE KEY `login` (`login`);
+ALTER TABLE `tb_questiongroupform`
+  ADD FOREIGN KEY (`crfFormsID`) REFERENCES `tb_crfforms` (`crfFormsID`),
+  ADD FOREIGN KEY (`questionID`) REFERENCES `tb_questions` (`questionID`);
 
 --
 -- Índices de tabela `tb_userrole`
 --
 ALTER TABLE `tb_userrole`
-  ADD PRIMARY KEY (`userID`,`groupRoleID`,`hospitalUnitID`),
-  ADD KEY `FKtb_UserRol864770` (`groupRoleID`),
-  ADD KEY `FKtb_UserRol324331` (`hospitalUnitID`);
+  ADD FOREIGN KEY (`userID`) REFERENCES `tb_user` (`userID`),
+  ADD FOREIGN KEY (`groupRoleID`) REFERENCES `tb_grouprole` (`groupRoleID`),
+  ADD FOREIGN KEY (`hospitalUnitID`) REFERENCES `tb_hospitalunit` (`hospitalUnitID`);
 
 --
--- AUTO_INCREMENT de tabelas apagadas
+-- Gatilhos
 --
+CREATE TRIGGER `insert_log` AFTER INSERT ON `tb_questiongroupformrecord`
+ FOR EACH ROW INSERT INTO tb_notificationrecord
+	(
+        `userID`,
+        `profileID`,
+        `hospitalUnitID`,
+        `tableName`,
+        `rowdID`,
+        `operation`,
+        `log`
+    )
+VALUES
+	(
+        1,
+        1,
+        1,
+        'tb_questiongroupformrecord',
+        NEW.questionGroupFormRecordID,
+        0,
+        JSON_OBJECT(	
+			'questionGroupFormRecordID', NEW.questionGroupFormRecordID,
+			'formRecordID', NEW.formRecordID,
+			'crfFormsID', NEW.crfFormsID,
+			'questionID', NEW.questionID,
+			'listOfValuesID', NEW.listOfValuesID,
+			'answer', NEW.answer
+        )
+    );
 
---
--- AUTO_INCREMENT de tabela `tb_crfforms`
---
-ALTER TABLE `tb_crfforms`
-  MODIFY `crfFormsID` int(10) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+CREATE TRIGGER `update_log` AFTER UPDATE ON `tb_questiongroupformrecord`
+ FOR EACH ROW INSERT INTO tb_notificationrecord
+	(
+        `userID`,
+        `profileID`,
+        `hospitalUnitID`,
+        `tableName`,
+        `rowdID`,
+        `operation`,
+        `log`
+    )
+VALUES
+	(
+        1,
+        1,
+        1,
+        'tb_questiongroupformrecord',
+        NEW.questionGroupFormRecordID,
+        1,
+        CONCAT_WS(
+            '
+',
+            JSON_OBJECT(	
+                'questionGroupFormRecordID', OLD.questionGroupFormRecordID,
+                'formRecordID', OLD.formRecordID,
+                'crfFormsID', OLD.crfFormsID,
+                'questionID', OLD.questionID,
+                'listOfValuesID', OLD.listOfValuesID,
+                'answer', OLD.answer
+            ),
+            JSON_OBJECT(	
+                'questionGroupFormRecordID', NEW.questionGroupFormRecordID,
+                'formRecordID', NEW.formRecordID,
+                'crfFormsID', NEW.crfFormsID,
+                'questionID', NEW.questionID,
+                'listOfValuesID', NEW.listOfValuesID,
+                'answer', NEW.answer
+            )
+        )
+    );
 
---
--- AUTO_INCREMENT de tabela `tb_formrecord`
---
-ALTER TABLE `tb_formrecord`
-  MODIFY `formRecordID` int(10) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT de tabela `tb_grouprole`
---
-ALTER TABLE `tb_grouprole`
-  MODIFY `groupRoleID` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
-
---
--- AUTO_INCREMENT de tabela `tb_hospitalunit`
---
-ALTER TABLE `tb_hospitalunit`
-  MODIFY `hospitalUnitID` int(10) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
-
---
--- AUTO_INCREMENT de tabela `tb_language`
---
-ALTER TABLE `tb_language`
-  MODIFY `languageID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
-
---
--- AUTO_INCREMENT de tabela `tb_listofvalues`
---
-ALTER TABLE `tb_listofvalues`
-  MODIFY `listOfValuesID` int(10) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=308;
-
---
--- AUTO_INCREMENT de tabela `tb_listtype`
---
-ALTER TABLE `tb_listtype`
-  MODIFY `listTypeID` int(10) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
-
---
--- AUTO_INCREMENT de tabela `tb_participant`
---
-ALTER TABLE `tb_participant`
-  MODIFY `participantID` int(10) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
-
---
--- AUTO_INCREMENT de tabela `tb_permission`
---
-ALTER TABLE `tb_permission`
-  MODIFY `permissionID` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
-
---
--- AUTO_INCREMENT de tabela `tb_user`
---
-ALTER TABLE `tb_user`
-  MODIFY `userID` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

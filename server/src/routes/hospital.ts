@@ -6,7 +6,7 @@ router.get('/:id?', async (req, res) => {
     try {
         let result;
         if (req.params.id) {
-            result = await hospital.getById(req.params.id);
+            result = await hospital.getByID(req.params.id);
         }
         else {
             result = await hospital.getAll();

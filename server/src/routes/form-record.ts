@@ -1,27 +1,18 @@
 import { Router } from 'express';
-import { validator } from 'indicative';
 import connection from '../database';
 
 const router = Router();
-router.get('/:questionnaireID/groups', async (req, res) => {
+router.get('/questionnaire/:questionnaireID', async (req, res) => {
     const query = `
         SELECT
             p.participantID,
             p.medicalRecord,
             h.hospitalUnitID,
             h.hospitalUnitName
-        FROM tb_FormRecord fr
-        LEFT JOIN tb_HospitalUnit h ON fr.hospitalUnitID = h.hospitalUnitID
-        LEFT JOIN tb_Participant p ON fr.participantID = p.participantID
-        LEFT JOIN tb_questiongroupformrecord qgfr ON qgfr.formRecordID = fr.formRecordID
-        LEFT JOIN tb_ListOfValues lv ON qgfr.listOfValuesID = lv.listOfValuesID
-        LEFT JOIN tb_ListType lt ON lv.listTypeID = lt.listTypeID
-        LEFT JOIN tb_Questions q ON qgfr.questionID = q.questionID
-        LEFT JOIN tb_Questions qs ON q.subordinateTo = qs.questionID
-        LEFT JOIN tb_QuestionType qt ON q.questionTypeID = qt.questionTypeID
-        LEFT JOIN tb_QuestionGroup qg ON q.questionGroupID = qg.questionGroupID
-        WHERE fr.questionnaireID = ?
-        GROUP BY participantID, medicalRecord, hospitalUnitName, hospitalUnitID;`;
+        FROM tb_assessmentquestionnaire asq
+        LEFT JOIN tb_HospitalUnit h ON asq.hospitalUnitID = h.hospitalUnitID
+        LEFT JOIN tb_Participant p ON asq.participantID = p.participantID
+        WHERE asq.questionnaireID = ?;`;
 
     try {
         const result = await connection.asyncQuery(query, req.params.questionnaireID);
@@ -39,13 +30,46 @@ router.get('/:questionnaireID/groups', async (req, res) => {
         });
     }
 });
-router.get('/:questionnaireID/participant/:participantID/hospital/:hospitalUnitID', async (req, res) => {
+router.get('/questionnaire/:questionnaireID/hospital/:hospitalUnitID/participant/:participantID', async (req, res) => {
+    const query = `
+        SELECT
+            fr.formRecordID,
+            crf.description,
+            fr.dtRegistroForm,
+            fr.crfFormsID
+        FROM tb_FormRecord fr
+        LEFT JOIN tb_CRFForms crf ON fr.crfFormsID = crf.crfFormsID
+        WHERE
+            fr.questionnaireID = ?
+        AND
+            fr.hospitalUnitID = ?
+        AND
+            fr.participantID = ?;`;
+    try {
+        const result = await connection.asyncQuery(query, req.params.questionnaireID, req.params.hospitalUnitID, req.params.hospitalUnitID);
+        res.status(200);
+        return res.json({
+            error: false,
+            data: result
+        });
+    } catch (error) {
+        console.log(error);
+        res.status(500);
+        return res.json({
+            error: false,
+            data: error
+        });
+    }
+});
+router.get('/:formRecordID', async (req, res) => {
     const query = `
         SELECT
             fr.formRecordID,
             fr.dtRegistroForm,
+            crf.crfFormsID,
             crf.description crfDescription,
 
+            qgfr.questionGroupFormRecordID,
             qgfr.answer,
 
             lv.listOfValuesID listValueID,
@@ -61,30 +85,34 @@ router.get('/:questionnaireID/participant/:participantID/hospital/:hospitalUnitI
 
             qg.questionGroupID,
             qg.description questionGroupDescription,
-
-            qs.questionID questaoPaiID
+            (
+                SELECT
+                    COUNT(DISTINCT qs.questionID)
+                FROM tb_Questions qs
+                LEFT JOIN tb_QuestionGroupForm qsgf ON qs.questionID = qsgf.questionID
+                LEFT JOIN tb_CRFForms crfs ON qsgf.crfFormsID = crfs.crfFormsID
+                WHERE
+                    qs.subordinateTo = q.questionID
+                AND
+                    crfs.crfFormsID = crf.crfFormsID
+            ) subordinateCount
         FROM tb_FormRecord fr
         LEFT JOIN tb_CRFForms crf ON fr.crfFormsID = crf.crfFormsID
-        LEFT JOIN tb_HospitalUnit h ON fr.hospitalUnitID = h.hospitalUnitID
-        LEFT JOIN tb_Participant p ON fr.participantID = p.participantID
-        LEFT JOIN tb_questiongroupformrecord qgfr ON qgfr.formRecordID = fr.formRecordID
         LEFT JOIN tb_QuestionGroupForm qgf ON crf.crfFormsID = qgf.crfFormsID
         LEFT JOIN tb_Questions q ON qgf.questionID = q.questionID
-        LEFT JOIN tb_Questions qs ON q.subordinateTo = qs.questionID
         LEFT JOIN tb_QuestionType qt ON q.questionTypeID = qt.questionTypeID
         LEFT JOIN tb_QuestionGroup qg ON q.questionGroupID = qg.questionGroupID
-        LEFT JOIN tb_ListOfValues lv ON qgfr.listOfValuesID = lv.listOfValuesID
         LEFT JOIN tb_ListType lt ON q.listTypeID = lt.listTypeID
+        LEFT JOIN tb_questiongroupformrecord qgfr ON qgfr.questionID = q.questionID
+        LEFT JOIN tb_ListOfValues lv ON qgfr.listOfValuesID = lv.listOfValuesID
         WHERE
-            fr.questionnaireID = ?
+            fr.formRecordID = ?
         AND
-            h.hospitalUnitID = ?
-        AND
-            p.participantID = ?
+            q.subordinateTo IS NULL
         ORDER BY qgf.questionOrder ASC;`;
 
     try {
-        const result = await connection.asyncQuery(query, req.params.questionnaireID, req.params.hospitalUnitID, req.params.participantID);
+        const result = await connection.asyncQuery(query, req.params.formRecordID);
         res.status(200);
         return res.json({
             error: false,
@@ -100,6 +128,62 @@ router.get('/:questionnaireID/participant/:participantID/hospital/:hospitalUnitI
     }
 
 });
+router.get('/:formRecordID/subordinate/:questionID', async (req, res) => {
+    const query = `
+        SELECT
+            fr.formRecordID,
+            fr.dtRegistroForm,
+            crf.crfFormsID,
+            crf.description crfDescription,
+
+            qgfr.questionGroupFormRecordID,
+            qgfr.answer,
+
+            lv.listOfValuesID listValueID,
+            lv.description listValueDescription,
+            q.listTypeID listTypeID,
+            lt.description listTypeDescription,
+
+            q.questionID,
+            q.description questionDescription,
+
+            qt.questionTypeID,
+            qt.description questionTypeDescription,
+
+            qg.questionGroupID,
+            qg.description questionGroupDescription
+
+        FROM tb_FormRecord fr
+        LEFT JOIN tb_CRFForms crf ON fr.crfFormsID = crf.crfFormsID
+        LEFT JOIN tb_QuestionGroupForm qgf ON crf.crfFormsID = qgf.crfFormsID
+        LEFT JOIN tb_Questions q ON qgf.questionID = q.questionID
+        LEFT JOIN tb_QuestionType qt ON q.questionTypeID = qt.questionTypeID
+        LEFT JOIN tb_QuestionGroup qg ON q.questionGroupID = qg.questionGroupID
+        LEFT JOIN tb_ListType lt ON q.listTypeID = lt.listTypeID
+        LEFT JOIN tb_questiongroupformrecord qgfr ON qgfr.questionID = q.questionID
+        LEFT JOIN tb_ListOfValues lv ON qgfr.listOfValuesID = lv.listOfValuesID
+        WHERE
+            fr.formRecordID = ?
+        AND
+            q.subordinateTo = ?
+        ORDER BY qgf.questionOrder ASC;`;
+
+    try {
+        const result = await connection.asyncQuery(query, req.params.formRecordID, req.params.questionID);
+        res.status(200);
+        return res.json({
+            error: false,
+            data: result
+        });
+    } catch (error) {
+        console.log(error);
+        res.status(500);
+        return res.json({
+            error: false,
+            data: error
+        });
+    }
+});
 
 router.post('/:questionnaireID/crf/:crfFormsID/participant/:participantID/hospital/:hospitalUnitID', async (req, res) => {
     const params = req.params;
@@ -114,10 +198,22 @@ router.post('/:questionnaireID/crf/:crfFormsID/participant/:participantID/hospit
         });
     }
     try {
-        await connection.asyncQuery(`
+        const assesments = await connection.asyncQuery(`
+            SELECT a.participantID, a.hospitalUnitID, a.questionnaireID
+            FROM tb_AssessmentQuestionnaire a
+            WHERE
+                a.participantID = ?
+            AND
+                a.hospitalUnitID = ?
+            AND
+                a.questionnaireID = ?;`, params.participantID, params.hospitalUnitID, params.questionnaireID);
+
+        if (!assesments || !assesments.length) {
+            await connection.asyncQuery(`
                 INSERT INTO
                     tb_AssessmentQuestionnaire (participantID, hospitalUnitID, questionnaireID)
                 VALUES (?, ?, ?);`, params.participantID, params.hospitalUnitID, params.questionnaireID);
+        }
 
         const result = await connection.asyncQuery(`
                 INSERT INTO
@@ -126,12 +222,20 @@ router.post('/:questionnaireID/crf/:crfFormsID/participant/:participantID/hospit
 
         if (result.insertId) {
             connection.asyncCommit();
+            const formRecord = await connection.asyncQuery(`
+                SELECT
+                    fr.formRecordID,
+                    crf.description,
+                    fr.dtRegistroForm,
+                    fr.crfFormsID
+                FROM tb_FormRecord fr
+                LEFT JOIN tb_CRFForms crf ON fr.crfFormsID = crf.crfFormsID
+                WHERE
+                    fr.formRecordID = ?;`, result.insertId);
             res.status(200);
             return res.json({
                 error: false,
-                data: {
-                    formRecordID: result.insertId
-                }
+                data: formRecord[0]
             });
         }
         await connection.asyncRollback();
