@@ -13,12 +13,14 @@ import { MatListModule } from '@angular/material/list';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { QuestionModule } from 'src/app/components/question/question.module';
 import { MatTooltipModule } from '@angular/material/tooltip';
-
+import { HistoryComponent } from './history/history.component';
+import { MatDividerModule } from '@angular/material/divider';
 
 @NgModule({
 	declarations: [
 		QuestionnaireComponent,
-		AnswerComponent
+		AnswerComponent,
+		HistoryComponent
 	],
 	imports: [
 		CommonModule,
@@ -31,6 +33,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 		MatListModule,
 		MatExpansionModule,
 		MatTooltipModule,
+		MatDividerModule,
 		QuestionModule
 	]
 })

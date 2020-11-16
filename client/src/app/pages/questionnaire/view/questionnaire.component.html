@@ -16,6 +16,9 @@
             <button color="primary" mat-fab matTooltip="Editar repostas" matTooltipPosition="above" *ngIf="!(editMode | async)" (click)="edit(index)">
                 <mat-icon>create</mat-icon>
             </button>
+            <button color="primary" mat-fab matTooltip="Histórico de edições" matTooltipPosition="above" *ngIf="!(editMode | async)" [routerLink]="['/questionnaire', formRecord.formRecordID, 'history']">
+                <mat-icon>restore</mat-icon>
+            </button>
             <button color="primary" mat-fab matTooltip="Salvar alterações" matTooltipPosition="above" *ngIf="editMode | async" (click)="edit(index)">
                 <mat-icon>save</mat-icon>
             </button>

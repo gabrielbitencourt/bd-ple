@@ -3,7 +3,8 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
-import { IFormRecord, IFormRecordGroup } from '../models/form-record';
+import { IAnswerHistory } from '../models/answer';
+import { IFormRecord, IFormRecordDetail, IFormRecordGroup } from '../models/form-record';
 import { IRespondantGroup } from '../models/questionnaire';
 import { IQuestionnaireAnswers } from '../models/questionnaire-answers';
 import { IResponse } from '../models/response';
@@ -68,6 +69,26 @@ export class FormRecordService {
 
 	getAnswersFromParentQuestionInFormRecord(formRecordID: number, questionID: number): Observable<IQuestionnaireAnswers[]> {
 		return this.http.get<IResponse>(environment.apiUrl + `/form-records/${formRecordID}/subordinate/${questionID}`)
+			.pipe(
+				map(res => {
+					if (!res.error) return res.data;
+					return [];
+				})
+			);
+	}
+
+	getDetails(formRecordID: number): Observable<IFormRecordDetail> {
+		return this.http.get<IResponse>(environment.apiUrl + `/form-records/${formRecordID}/details`)
+			.pipe(
+				map(res => {
+					if (!res.error) return res.data;
+					return [];
+				})
+			);
+	}
+
+	getHistory(formRecordID: number): Observable<IAnswerHistory[]> {
+		return this.http.get<IResponse>(environment.apiUrl + `/form-records/${formRecordID}/history`)
 			.pipe(
 				map(res => {
 					if (!res.error) return res.data;

@@ -184,7 +184,56 @@ router.get('/:formRecordID/subordinate/:questionID', async (req, res) => {
         });
     }
 });
-
+router.get('/:formRecordID/history', async (req, res) => {
+    try {
+        const results = await connection.asyncQuery(`
+            SELECT
+                log,
+                changedOn,
+                operation
+            FROM tb_notificationrecord
+            WHERE log LIKE '%\"formRecordID\": ?%'
+            ORDER BY changedOn DESC;`, parseInt(req.params.formRecordID));
+        res.status(200);
+        return res.json({
+            error: false,
+            data: results.map((r: any) => {
+                r.log = JSON.parse(r.log);
+                return r;
+            })
+        });
+    } catch (error) {
+        console.log(error);
+        res.status(500);
+        return res.json({
+            error: false,
+            data: error
+        });
+    }
+});
+router.get('/:formRecordID/details', async (req, res) => {
+    try {
+        const results = await connection.asyncQuery(`
+            SELECT *
+            FROM tb_formrecord fr
+            LEFT JOIN tb_hospitalunit h ON fr.hospitalunitid = h.hospitalunitid
+            LEFT JOIN tb_participant p ON fr.participantid = p.participantid
+            LEFT JOIN tb_questionnaire q ON fr.questionnaireid = q.questionnaireid
+            WHERE formRecordID = ?;`, parseInt(req.params.formRecordID));
+        res.status(200);
+        return res.json({
+            error: false,
+            data: results && results.length ? results[0] : undefined
+        });
+    } catch (error) {
+        console.log(error);
+        res.status(500);
+        return res.json({
+            error: false,
+            data: error
+        });
+    }
+});
 router.post('/:questionnaireID/crf/:crfFormsID/participant/:participantID/hospital/:hospitalUnitID', async (req, res) => {
     const params = req.params;
     const err = await connection.asyncBeginTransaction();

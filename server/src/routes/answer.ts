@@ -165,4 +165,20 @@ router.put('/:id', async (req, res) => {
         });
     }
 });
+router.delete('/:id', async (req, res) => {
+    try {
+        await connection.asyncQuery("DELETE FROM tb_questiongroupformrecord WHERE questionGroupFormRecordID = ?;", req.params.id);
+        res.status(200);
+        return res.json({
+            error: false
+        });
+    } catch (error) {
+        console.log(error);
+        res.status(500);
+        return res.json({
+            error: true,
+            data: error
+        });
+    }
+});
 export default router;

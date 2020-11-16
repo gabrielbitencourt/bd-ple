@@ -19,3 +19,15 @@ export interface IFormRecordGroup {
 	name: string;
 	answers: IQuestionnaireAnswers[];
 }
+
+export interface IFormRecordDetail {
+	formRecordID: number;
+	participantID: number;
+	hospitalUnitID: number;
+	questionnaireID: number;
+	crfFormsID: number;
+	dtRegistroForm: string;
+	hospitalUnitName: string;
+	medicalRecord: string;
+	description: string;
+}

@@ -1,9 +1,11 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { MatCheckbox, MatCheckboxChange } from '@angular/material/checkbox';
 import { MatDatepicker, MatDatepickerToggle } from '@angular/material/datepicker';
+import { MatMenuTrigger } from '@angular/material/menu';
 import { Observable } from 'rxjs';
 import { first } from 'rxjs/operators';
 import { IQuestionnaireAnswers } from 'src/app/models/questionnaire-answers';
+import { AnswerService } from 'src/app/services/answer.service';
 import { FormRecordService } from 'src/app/services/form-record.service';
 import { ListService } from 'src/app/services/list.service';
 
@@ -17,7 +19,11 @@ export class QuestionComponent implements OnInit {
 	@Input() question: IQuestionnaireAnswers;
 	@Input() editMode: Observable<boolean>;
 
-	constructor(private listService: ListService, private formRecordsService: FormRecordService) { }
+	constructor(
+		private listService: ListService,
+		private formRecordsService: FormRecordService,
+		private answerService: AnswerService
+	) { }
 
 	async ngOnInit(): Promise<void> {
 		if (this.question.questionTypeID === 1 && typeof this.question.answer !== 'boolean') {
@@ -65,5 +71,17 @@ export class QuestionComponent implements OnInit {
 			return option ? option.description : undefined;
 		}
 	}
+
+	async delete(): Promise<void> {
+		if (confirm('Tem certeza que deseja deletar a resposta selecionada?')) {
+			const res = await this.answerService.delete(this.question.questionGroupFormRecordID).pipe(first()).toPromise();
+			if (!res.error) {
+				this.question.questionGroupFormRecordID = null;
+				this.question.answer = null;
+				this.question.listValueID = null;
+			}
+		}
+	}
+
 
 }

@@ -1,7 +1,4 @@
-export interface IListOption {
-	listOfValuesID: number;
-	description: string;
-}
+import { IListValue } from './list-value';
 
 export interface IQuestionnaireAnswers {
 	questionGroupFormRecordID: number;
@@ -21,6 +18,6 @@ export interface IQuestionnaireAnswers {
 	questionGroupID: number;
 	questionGroupDescription: string;
 	subordinateCount: number;
-	options?: IListOption[];
+	options?: IListValue[];
 	subordinates?: IQuestionnaireAnswers[];
 }

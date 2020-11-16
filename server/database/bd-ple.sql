@@ -2042,38 +2042,67 @@ ALTER TABLE `tb_userrole`
 --
 -- Gatilhos
 --
-CREATE TRIGGER `insert_log` AFTER INSERT ON `tb_questiongroupformrecord`
- FOR EACH ROW INSERT INTO tb_notificationrecord
-	(
-        `userID`,
-        `profileID`,
-        `hospitalUnitID`,
-        `tableName`,
-        `rowdID`,
-        `operation`,
-        `log`
-    )
-VALUES
-	(
-        1,
-        1,
-        1,
-        'tb_questiongroupformrecord',
-        NEW.questionGroupFormRecordID,
-        0,
-        JSON_OBJECT(	
-			'questionGroupFormRecordID', NEW.questionGroupFormRecordID,
-			'formRecordID', NEW.formRecordID,
-			'crfFormsID', NEW.crfFormsID,
-			'questionID', NEW.questionID,
-			'listOfValuesID', NEW.listOfValuesID,
-			'answer', NEW.answer
-        )
-    );
-
 CREATE TRIGGER `update_log` AFTER UPDATE ON `tb_questiongroupformrecord`
  FOR EACH ROW INSERT INTO tb_notificationrecord
-	(
+(
+    `userID`,
+    `profileID`,
+    `hospitalUnitID`,
+    `tableName`,
+    `rowdID`,
+    `operation`,
+    `log`
+)
+VALUES
+(
+    1,
+    1,
+    1,
+    'tb_questiongroupformrecord',
+    NEW.questionGroupFormRecordID,
+    1,
+    JSON_OBJECT(
+        'questionGroupFormRecordID', NEW.questionGroupFormRecordID,
+        'formRecordID', NEW.formRecordID,
+        'crfFormsID', NEW.crfFormsID,
+        'questionID', NEW.questionID,
+        'listOfValuesID', NEW.listOfValuesID,
+        'answer', NEW.answer
+    )
+)
+
+CREATE TRIGGER `insert_log` AFTER INSERT ON `tb_questiongroupformrecord`
+ FOR EACH ROW INSERT INTO tb_notificationrecord
+(
+    `userID`,
+    `profileID`,
+    `hospitalUnitID`,
+    `tableName`,
+    `rowdID`,
+    `operation`,
+    `log`
+)
+VALUES
+(
+    1,
+    1,
+    1,
+    'tb_questiongroupformrecord',
+    NEW.questionGroupFormRecordID,
+    0,
+    JSON_OBJECT(
+      'questionGroupFormRecordID', NEW.questionGroupFormRecordID,
+      'formRecordID', NEW.formRecordID,
+      'crfFormsID', NEW.crfFormsID,
+      'questionID', NEW.questionID,
+      'listOfValuesID', NEW.listOfValuesID,
+      'answer', NEW.answer
+    )
+)
+
+CREATE TRIGGER `delete_log` AFTER DELETE ON `tb_questiongroupformrecord`
+ FOR EACH ROW INSERT INTO tb_notificationrecord
+(
         `userID`,
         `profileID`,
         `hospitalUnitID`,
@@ -2083,34 +2112,22 @@ CREATE TRIGGER `update_log` AFTER UPDATE ON `tb_questiongroupformrecord`
         `log`
     )
 VALUES
-	(
-        1,
-        1,
-        1,
-        'tb_questiongroupformrecord',
-        NEW.questionGroupFormRecordID,
-        1,
-        CONCAT_WS(
-            '
-',
-            JSON_OBJECT(	
-                'questionGroupFormRecordID', OLD.questionGroupFormRecordID,
-                'formRecordID', OLD.formRecordID,
-                'crfFormsID', OLD.crfFormsID,
-                'questionID', OLD.questionID,
-                'listOfValuesID', OLD.listOfValuesID,
-                'answer', OLD.answer
-            ),
-            JSON_OBJECT(	
-                'questionGroupFormRecordID', NEW.questionGroupFormRecordID,
-                'formRecordID', NEW.formRecordID,
-                'crfFormsID', NEW.crfFormsID,
-                'questionID', NEW.questionID,
-                'listOfValuesID', NEW.listOfValuesID,
-                'answer', NEW.answer
-            )
-        )
-    );
+(
+    1,
+    1,
+    1,
+    'tb_questiongroupformrecord',
+    OLD.questionGroupFormRecordID,
+    2,
+    JSON_OBJECT(
+      'questionGroupFormRecordID', OLD.questionGroupFormRecordID,
+      'formRecordID', OLD.formRecordID,
+      'crfFormsID', OLD.crfFormsID,
+      'questionID', OLD.questionID,
+      'listOfValuesID', OLD.listOfValuesID,
+      'answer', OLD.answer
+    )
+)
 
 COMMIT;
 

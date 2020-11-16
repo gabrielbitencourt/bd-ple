@@ -1,0 +1,20 @@
+<h1 *ngIf="formRecord">{{ formRecord.description }}</h1>
+<h3 id="participant" *ngIf="formRecord">Registro médico do paciente: {{ formRecord.medicalRecord }}</h3>
+<h3 *ngIf="formRecord">{{ formRecord.hospitalUnitName }}</h3>
+
+<mat-list *ngIf="history && questions && options" role="list">
+    <mat-list-item role="listitem" *ngFor="let item of history; last as last">
+        [{{ item.changedOn | date: 'dd/MM/yyyy hh:mm:ss' }}]:&nbsp;
+        <ng-container *ngIf="item.operation == 0">
+            Respota "{{ options[item.log.listOfValuesID] ? options[item.log.listOfValuesID].description : item.log.answer }}" foi adicionada para questão "{{ questions[item.log.questionID].description }}".
+        </ng-container>
+        <ng-container *ngIf="item.operation == 1">
+            Resposta para questão "{{ questions[item.log.questionID].description }}" foi atualizada para "{{ options[item.log.listOfValuesID] ? options[item.log.listOfValuesID].description : item.log.answer }}"
+        </ng-container>
+        <ng-container *ngIf="item.operation == 2">
+            Resposta "{{ options[item.log.listOfValuesID] ? options[item.log.listOfValuesID].description : item.log.answer }}" para questão "{{ questions[item.log.questionID].description }}" foi excluída.
+        </ng-container>
+        <mat-divider *ngIf="!last"></mat-divider>
+    </mat-list-item>
+</mat-list>
+<p *ngIf="!history.length">Não há histórico de edição para esse formulário.</p>

@@ -1,20 +1,24 @@
-div {
-    margin-bottom: 12px;
+div.question-container {
+    display: flex;
+    align-items: center;
     & > mat-label {
         font-weight: bold;
     }
-}
-mat-radio-group {
-    display: block;
-    mat-radio-button {
-        margin-right: 8px;
+    mat-radio-group {
+        display: block;
+        mat-radio-button {
+            margin-right: 8px;
+        }
+    }
+    mat-checkbox.not-done-checkbox {
+        padding-left: 8px;
+    }
+    p {
+        margin-bottom: 0;
+        display: inline-block;
+        color: rgba(0,0,0,.42)
     }
 }
-mat-checkbox.not-done-checkbox {
-    padding-left: 8px;
-}
-p {
-    margin-bottom: 0;
-    display: inline-block;
-    color: rgba(0,0,0,.42)
+div.question-container {
+    margin-bottom: 12px;
 }

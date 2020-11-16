@@ -11,3 +11,16 @@ export interface ICreateAnswer {
 	answer?: any;
 	listOfValuesID?: number;
 }
+
+export interface IAnswerHistory {
+	changedOn: string;
+	operation: number;
+	log: {
+		answer: string;
+		crfFormsID: number;
+		formRecordID: number;
+		listOfValuesID?: null;
+		questionGroupFormRecordID: number;
+		questionID: number;
+	};
+}
