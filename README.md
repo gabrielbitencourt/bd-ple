@@ -7,6 +7,7 @@ Alteração/Exclusão das informações de paciente em um módulo do questionár
 
 - [NodeJS e npm](https://nodejs.org/)
 - Angular CLI (`npm i -g @angular/cli`)
+- Banco de dados mysql
 
 ### Base de dados
 Para a criação do schema do banco de dados, utilize o script da pasta server/database. Nele estão todas as estruturas de tabela, triggers e funções utilizadas. Há também um seed de dados inicial, incluindo um usuário para login `admin:senha1234`.
@@ -14,7 +15,8 @@ Para a criação do schema do banco de dados, utilize o script da pasta server/d
 ### Instruções para rodar o projeto
 0. Caso seja a primeira vez que esteja executando o projeto execute o comando `npm install` em ambos os diretórios (client e server).
 1. Entre no diretório client e execute o seguinte comando: `npm run build`.
-2. Entre no diretório server e execute o seguinte comando: `npm start`
-3. Acesse o site em http://localhost:3000
+2. Entre no diretório server e clone o arquivo `.env.example` para `.env` (`cp .env.example .env`) e preencha as informações de login ao banco de dados (por default se conecta a localhost:3306 na base bd-ple com usuário root sem senha).
+3. Entre no diretório server e execute o seguinte comando: `npm start`
+4. Acesse o site em http://localhost:3000
 
-Obs.: Para facilitar o desenvolvimento é possível rodar o client como uma aplicação separada do server, para isso rode o comando no diretório client: `npm start` e, em outro terminal rode o comando no diretório server: `npm run start:dev`. Com isso é possível acessar o client em http://localhost:4200, que faz o build automáticamente a cada vez que um arquivo é modificado tanto no client como no server.
+Obs.: Para facilitar o desenvolvimento é possível rodar o client como uma aplicação separada do server, para isso rode o comando no diretório client: `npm start` e, em outro terminal rode o comando no diretório server: `npm run start:dev`. Com isso é possível acessar o client em http://localhost:4200. Esses comando fazem  o build automáticamente a cada vez que um arquivo é modificado, tanto no client como no server.
